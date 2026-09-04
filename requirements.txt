@@ -1,0 +1,7 @@
+# Direct dependencies verified with Python 3.12; sqlite3 is in the standard library.
+streamlit==1.63.0
+pytest==8.4.2
+requests==2.34.2
+pypdf==6.16.2
+python-docx==1.2.0
+plotly==6.9.0
