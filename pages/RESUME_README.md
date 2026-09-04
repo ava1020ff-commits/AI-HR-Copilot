@@ -39,3 +39,6 @@ SQLite 为本地明文，请限制目录访问权限，不要提交真实简历�
 
 文本提取参考 [pypdf 文档](https://pypdf.readthedocs.io/en/5.4.0/user/extract-text.html)，
 API JSON 校验参考 [OpenAI 文档](https://developers.openai.com/api/docs/guides/structured-outputs)。
+# 候选人搜索与筛选
+
+页面下方的“已保存候选人”列表仅展示 HR 已确认的数据。支持按姓名、ID、职业经历和技能搜索；空格分隔的多个关键词需全部匹配，英文忽略大小写。教育记录和技能可叠加筛选，教育记录保留简历原文，不推断学历等级。点击“清空筛选”恢复全部记录，选择候选人可查看职业详情。搜索不会改写数据库、匹配分数或招聘状态，不使用性别、年龄和婚育字段。

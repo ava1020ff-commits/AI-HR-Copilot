@@ -110,7 +110,7 @@ def test_stage_requires_report_and_is_current_value() -> None:
 
 
 def test_page_empty_shows_four_charts() -> None:
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     assert not app.exception and len(app.metric) == 4
     assert len(app.get("plotly_chart")) == 4
     assert app.metric[2].value == "暂无数据"
@@ -118,7 +118,7 @@ def test_page_empty_shows_four_charts() -> None:
 
 def test_page_data_and_manual_confirmation() -> None:
     seed()
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     assert not app.exception and len(app.get("plotly_chart")) == 4
     assert app.metric[0].value == "1" and app.metric[1].value == "1"
     app.button[0].click().run()
@@ -134,7 +134,7 @@ def test_matching_page_saves_report() -> None:
     save_job("合成 JD", role, "mock")
     save_candidate(resume, "local", confirmed=True)
     match_page = PAGE.parents[0] / "03_智能匹配.py"
-    app = AppTest.from_file(str(match_page), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + match_page.name).run()
     app.button[0].click().run()
     assert not app.exception and len(read_analytics()["reports"]) == 1
 

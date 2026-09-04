@@ -171,7 +171,7 @@ def test_database_selection_and_read_only(tmp_path) -> None:
 
 
 def test_page_empty_state() -> None:
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     assert not app.exception and app.warning
     assert not app.selectbox
 
@@ -182,7 +182,7 @@ def test_page_computation_and_selection_change() -> None:
     save_candidate(first, "local", confirmed=True)
     second = {"candidate_name": "合成测试乙", **{key: [] for key in FIELDS}}
     save_candidate(second, "local", confirmed=True)
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     assert not app.exception and len(app.selectbox) == 2
     app.button[0].click().run()
     assert not app.exception and app.metric[0].value == "0.0"

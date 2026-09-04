@@ -131,7 +131,7 @@ def test_invalid_result_not_saved(tmp_path) -> None:
 
 
 def test_page_mock_flow_and_rerun(tmp_path) -> None:
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     assert not app.exception
     assert app.checkbox[0].value is True
     app.text_area[0].input(JD)
@@ -150,7 +150,7 @@ def test_page_mock_flow_and_rerun(tmp_path) -> None:
 
 def test_page_save_failure(monkeypatch) -> None:
     monkeypatch.setattr("database.jobs.save_job", MagicMock(side_effect=sqlite3.OperationalError("locked")))
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.text_area[0].input(JD)
     app.button[0].click().run()
     assert not app.exception
@@ -161,7 +161,7 @@ def test_page_save_failure(monkeypatch) -> None:
 def test_page_requires_consent_in_real_mode(monkeypatch) -> None:
     monkeypatch.setenv("LLM_API_KEY", "test-only-key")
     monkeypatch.setenv("LLM_MODEL", "test-model")
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.text_area[0].input(JD)
     app.button[0].click().run()
     assert "授权" in app.error[0].value

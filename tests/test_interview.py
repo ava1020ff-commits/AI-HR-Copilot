@@ -131,7 +131,7 @@ def test_sensitive_information_not_quoted() -> None:
 
 
 def test_page_empty_state() -> None:
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     assert not app.exception and app.warning
 
 
@@ -142,7 +142,7 @@ def test_page_generates_and_clears_on_change() -> None:
     second["candidate_name"] = "合成面试乙"
     second["projects"] = ["海风客服：使用 RAG 完成客服检索"]
     save_candidate(second, "local", confirmed=True)
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.button[0].click().run()
     assert not app.exception and app.success and app.json
     app.selectbox[1].select(1).run()
@@ -154,7 +154,7 @@ def test_page_reuses_matching_report() -> None:
     save_candidate(candidate(), "local", confirmed=True)
     saved_job, saved_candidate = list_jobs()[0], list_candidates()[0]
     report = calculate_match(saved_job["data"], saved_candidate["data"], {"AI能力": ["RAG", "评测"], "数据能力": ["SQL"]})
-    app = AppTest.from_file(str(PAGE), default_timeout=15)
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name)
     app.session_state["match_selection"] = json.dumps([saved_job, saved_candidate], sort_keys=True, ensure_ascii=False)
     app.session_state["match_result"] = report
     app.run()

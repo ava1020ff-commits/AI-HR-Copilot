@@ -15,7 +15,8 @@ def test_homepage_renders_without_errors() -> None:
     assert any("从岗位与简历出发" in item.value for item in app.markdown)
     assert not any("<style>" in item.value for item in app.markdown)
     assert any("<style>" in item.proto.body for item in app.get("html"))
-    assert len(app.get("page_link")) == 5
+    assert len(app.get("page_link")) == 11
+    assert app.sidebar.get("page_link")[0].label == "招聘工作台"
 
 
 def test_homepage_database_error_is_not_zero(monkeypatch) -> None:

@@ -39,5 +39,14 @@ def apply_saas_theme(section: str) -> None:
     with st.sidebar:
         st.markdown("### AI Recruitment")
         st.caption("Enterprise HR Copilot")
+        for path, label in (
+            ("app.py", "招聘工作台"),
+            ("pages/01_岗位管理.py", "岗位管理"),
+            ("pages/02_候选人.py", "候选人"),
+            ("pages/03_智能匹配.py", "智能匹配"),
+            ("pages/04_面试助手.py", "面试助手"),
+            ("pages/05_招聘分析.py", "招聘分析"),
+        ):
+            st.page_link(path, label=label)
         st.divider()
         st.caption(f"当前模块 · {section}")

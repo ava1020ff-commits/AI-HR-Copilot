@@ -6,6 +6,8 @@ import sqlite3
 import streamlit as st
 
 from database.candidates import save_candidate
+from database.matching_records import list_candidates
+from services.candidate_search import filter_candidates
 from services.jd_parser import LLMConfig
 from services.resume_parser import FIELDS, ResumeError, extract_resume, parse_resume, sanitize_text, validate_resume
 from services.ui import apply_saas_theme
@@ -85,3 +87,43 @@ if "resume_draft" in st.session_state:
     else:
         with st.expander("查看初始解析 JSON"):
             st.json(draft["result"])
+
+st.divider()
+st.subheader("已保存候选人")
+st.caption("仅展示经 HR 确认保存的记录。搜索和筛选不会改变匹配分数或招聘状态。")
+try:
+    records = list_candidates()
+except (sqlite3.Error, OSError, ValueError):
+    st.error("候选人列表读取失败，请检查数据库配置与权限。")
+else:
+    if not records:
+        st.info("暂无已保存候选人，请先上传简历并确认保存。")
+    else:
+        query = st.text_input("搜索候选人", placeholder="姓名、ID、技能、项目或经历；多个词用空格分隔", key="candidate_query")
+        education_options = sorted({item for record in records for item in record["data"].get("education", [])})
+        skill_options = sorted({item for record in records for item in record["data"].get("skills", [])})
+        columns = st.columns(2)
+        education = columns[0].selectbox("教育记录", [""] + education_options, format_func=lambda value: value or "全部", key="candidate_education")
+        skill = columns[1].selectbox("技能", [""] + skill_options, format_func=lambda value: value or "全部", key="candidate_skill")
+        def clear_filters() -> None:
+            for key in ("candidate_query", "candidate_education", "candidate_skill"):
+                st.session_state[key] = ""
+        st.button("清空筛选", on_click=clear_filters)
+        filtered = filter_candidates(records, query, education, skill)
+        st.caption(f"找到 {len(filtered)} / {len(records)} 位候选人 · 教育记录按简历原文筛选，不推断学历等级。")
+        if not filtered:
+            st.info("没有符合条件的候选人，请调整关键词或清空筛选。")
+        else:
+            st.dataframe([
+                {"ID": record["id"], "姓名": record["data"].get("candidate_name", ""),
+                 "教育记录": "；".join(record["data"].get("education", [])),
+                 "技能": "、".join(record["data"].get("skills", []))}
+                for record in filtered
+            ], hide_index=True, use_container_width=True)
+            chosen = st.selectbox("查看候选人详情", [record["id"] for record in filtered],
+                format_func=lambda identifier: next(f"{r['label']} · ID {identifier}" for r in filtered if r["id"] == identifier))
+            data = next(record["data"] for record in filtered if record["id"] == chosen)
+            with st.expander("职业经历与技能详情"):
+                for field, label in FIELDS.items():
+                    st.markdown(f"**{label}**")
+                    st.text("\n".join(data.get(field, [])) or "未提供")

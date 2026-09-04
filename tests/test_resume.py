@@ -189,7 +189,7 @@ def uploaded_docx() -> io.BytesIO:
 def test_page_edit_and_confirm(monkeypatch, tmp_path) -> None:
     upload = uploaded_docx()
     monkeypatch.setattr("streamlit.file_uploader", lambda *args, **kwargs: upload)
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.button[0].click().run()
     assert not app.exception
     path = tmp_path / "candidates.sqlite3"
@@ -210,7 +210,7 @@ def test_page_edit_and_confirm(monkeypatch, tmp_path) -> None:
 def test_removing_upload_clears_draft(monkeypatch) -> None:
     holder = {"upload": uploaded_docx()}
     monkeypatch.setattr("streamlit.file_uploader", lambda *args, **kwargs: holder["upload"])
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.button[0].click().run()
     assert app.text_input
     holder["upload"] = None
@@ -230,7 +230,7 @@ def test_save_failure_preserves_edits(monkeypatch) -> None:
     upload = uploaded_docx()
     monkeypatch.setattr("streamlit.file_uploader", lambda *args, **kwargs: upload)
     monkeypatch.setattr("database.candidates.save_candidate", MagicMock(side_effect=sqlite3.OperationalError("locked")))
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.button[0].click().run()
     app.text_input[0].input("修改保留")
     app.checkbox(key="resume_reviewed").check()
@@ -242,7 +242,7 @@ def test_save_failure_preserves_edits(monkeypatch) -> None:
 def test_same_filename_new_content_clears_draft(monkeypatch) -> None:
     holder = {"upload": uploaded_docx()}
     monkeypatch.setattr("streamlit.file_uploader", lambda *args, **kwargs: holder["upload"])
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.button[0].click().run()
     new_upload = io.BytesIO(docx_bytes(TEXT.replace("测试甲", "测试乙")))
     new_upload.name = "synthetic.docx"
@@ -258,7 +258,7 @@ def test_llm_consent_required(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("LLM_MODEL", "test-model")
     upload = uploaded_docx()
     monkeypatch.setattr("streamlit.file_uploader", lambda *args, **kwargs: upload)
-    app = AppTest.from_file(str(PAGE), default_timeout=15).run()
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.button[0].click().run()
     assert not app.exception and app.error
     assert "授权" in app.error[0].value
