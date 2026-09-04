@@ -13,8 +13,6 @@ def main() -> None:
     st.set_page_config(page_title="AI Recruitment Copilot", page_icon="💼", layout="wide")
     apply_saas_theme("首页")
     st.title("AI Recruitment Copilot")
-    st.markdown("从岗位与简历出发，完成证据匹配、面试准备与招聘跟进。")
-    st.caption("AI 辅助分析 · HR 确认与决策")
     try:
         metrics = dashboard_metrics(list_jobs(), list_candidates(), read_analytics())
     except (sqlite3.Error, OSError, ValueError):
