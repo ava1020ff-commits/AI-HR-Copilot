@@ -1,0 +1,81 @@
+/* Apple-inspired utility surfaces; fixed local assets, no external fonts. */
+:root {
+  --hr-ink: #1d1d1f;
+  --hr-muted: #6e6e73;
+  --hr-line: #e0e0e0;
+  --hr-accent: #0066cc;
+  --hr-focus: #0071e3;
+  --hr-on-dark: #2997ff;
+  --hr-white: #ffffff;
+  --hr-canvas: #f5f5f7;
+  --hr-pearl: #fafafc;
+  --hr-black: #000000;
+  --hr-dark-muted: #cccccc;
+  --hr-dark: #272729;
+  --hr-card-radius: 18px;
+  --hr-pill: 9999px;
+  --hr-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.stApp { background: var(--hr-canvas); color: var(--hr-ink); font-family: var(--hr-font); }
+[data-testid="stHeader"] { background: var(--hr-canvas); }
+.block-container { max-width: 1440px; padding-top: 3rem; padding-bottom: 4rem; }
+h1, h2, h3, p, label, input, textarea, button { font-family: var(--hr-font); }
+h1 { color: var(--hr-ink); font-size: 44px !important; font-weight: 600 !important; line-height: 1.15 !important; letter-spacing: -.374px; margin-bottom: 12px !important; }
+h2 { color: var(--hr-ink); font-size: 28px !important; font-weight: 600 !important; line-height: 1.2; margin-top: 32px !important; }
+h3 { color: var(--hr-ink); font-size: 21px !important; font-weight: 600 !important; line-height: 1.47; }
+p, label { font-size: 17px; font-weight: 400; line-height: 1.47; }
+[data-testid="stCaptionContainer"] p { color: var(--hr-muted); font-size: 14px; line-height: 1.47; }
+[data-testid="stMetric"] { background: var(--hr-white); border: 1px solid var(--hr-line); border-radius: var(--hr-card-radius); padding: 24px; min-height: 136px; box-shadow: none; }
+[data-testid="stMetricLabel"] { color: var(--hr-muted); }
+[data-testid="stMetricValue"] { color: var(--hr-ink); font-size: 40px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.374px; }
+[data-testid="stVerticalBlockBorderWrapper"], [data-testid="stVerticalBlock"][style*="border: 1px"] { background: var(--hr-white); border-color: var(--hr-line) !important; border-radius: var(--hr-card-radius); box-shadow: none; }
+[data-testid="stPageLink"] a { color: var(--hr-accent); min-height: 44px; border-radius: 8px; }
+.stButton > button, [data-testid="stFormSubmitButton"] > button {
+  min-height: 44px; padding: 11px 22px; border-radius: var(--hr-pill);
+  background: var(--hr-white); color: var(--hr-accent); border: 1px solid var(--hr-accent); font-weight: 400; box-shadow: none;
+}
+.stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] > button[kind="primary"] { background: var(--hr-accent); border-color: var(--hr-accent); color: var(--hr-white); }
+.stButton > button:disabled { color: var(--hr-muted); border-color: var(--hr-line); background: var(--hr-pearl); }
+button:active:not(:disabled) { transform: scale(.95); }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--hr-focus) !important; outline-offset: 3px; }
+[data-testid="stTextInput"] [data-baseweb="input"] { border-radius: var(--hr-pill); min-height: 44px; background: var(--hr-white); }
+[data-testid="stTextInput"] input { color: var(--hr-ink); padding-inline: 20px; }
+[data-testid="stTextArea"] textarea, [data-baseweb="select"] > div { color: var(--hr-ink); background: var(--hr-white); border-radius: 8px; }
+[data-testid="stFileUploaderDropzone"] { background: var(--hr-white); border: 1px dashed var(--hr-line); border-radius: var(--hr-card-radius); padding: 24px; }
+[data-testid="stExpander"] { background: var(--hr-pearl); border: 1px solid var(--hr-line); border-radius: var(--hr-card-radius); }
+[data-testid="stDataFrame"], [data-testid="stTable"] { border: 1px solid var(--hr-line); border-radius: 8px; overflow: auto; }
+/* Preserve native success/warning/error colors and messages. */
+[data-testid="stAlert"] { border-radius: 8px; }
+hr { border-color: var(--hr-line); margin: 24px 0; }
+[data-testid="stSidebar"] { background: var(--hr-black); color: var(--hr-white); }
+[data-testid="stSidebar"] h3 { color: var(--hr-white); }
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p { color: var(--hr-dark-muted); }
+[data-testid="stSidebar"] [data-testid="stPageLink"] a { color: var(--hr-dark-muted); padding: 12px 16px; }
+[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] { color: var(--hr-on-dark); background: var(--hr-dark); }
+[data-testid="stSidebar"] button { color: var(--hr-white); }
+[data-testid="stSidebar"] hr { border-color: var(--hr-dark); }
+/* Stable, app-owned hooks for navigation and the three workflow cards. */
+[data-testid="stSidebar"] [class*="st-key-nav_active_"] { background: var(--hr-dark); border-radius: 10px; border-left: 3px solid var(--hr-on-dark); }
+[data-testid="stSidebar"] [class*="st-key-nav_active_"] a { color: var(--hr-white); font-weight: 600; }
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover { background: var(--hr-dark); color: var(--hr-white); }
+[class*="st-key-workflow_"] { background: var(--hr-white); border: 1px solid var(--hr-line) !important; border-radius: var(--hr-card-radius) !important; padding: 24px !important; min-height: 216px; }
+[class*="st-key-workflow_"] h3 { font-size: 19px !important; }
+[class*="st-key-workflow_"] [data-testid="stPageLink"] a { color: var(--hr-accent); }
+@media (min-width: 641px) and (max-width: 800px) {
+  [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+  [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 45% !important; min-width: 0 !important; }
+  [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:has([class*="st-key-workflow_"]) { flex-basis: 100% !important; }
+  [class*="st-key-workflow_"] { min-height: auto; }
+}
+@media (max-width: 1068px) { h1 { font-size: 40px !important; } .block-container { padding-inline: 24px; } }
+@media (max-width: 640px) {
+  h1 { font-size: 34px !important; overflow-wrap: anywhere; }
+  h2 { font-size: 24px !important; }
+  .block-container { padding-top: 24px; padding-inline: 16px; }
+  [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+  [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 100% !important; min-width: 0 !important; }
+  [data-testid="stMetric"] { min-height: 112px; }
+  [class*="st-key-workflow_"] { min-height: auto; padding: 20px !important; }
+}
+@media (max-width: 419px) { h1 { font-size: 28px !important; } }
+@media (prefers-reduced-motion: reduce) { button:active:not(:disabled) { transform: none; } }

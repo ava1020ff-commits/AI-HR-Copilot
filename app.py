@@ -38,7 +38,7 @@ def main() -> None:
         ("岗位管理 →", "候选人 →", "智能匹配 →"),
     ):
         with column:
-            with st.container(border=True):
+            with st.container(border=True, key=f"workflow_{title[:2]}"):
                 st.markdown(f"### {title}")
                 st.write(description)
                 st.page_link(page, label=label)
