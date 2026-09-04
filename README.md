@@ -2,7 +2,7 @@
 
 面向招聘资料整理与人工评估的 AI-HR 作品集原型。
 
-[在线体验](https://ava1020ff-commits-ai-hr-copilot-app-jnlwe3.streamlit.app) · [源代码](https://github.com/ava1020ff-commits/AI-HR-Copilot) · [部署指南](DEPLOYMENT.md)
+[在线体验](https://ff-hr-workbench.streamlit.app/) · [源代码](https://github.com/ava1020ff-commits/AI-HR-Copilot) · [部署指南](DEPLOYMENT.md)
 
 ## 60 秒体验
 
@@ -20,7 +20,7 @@
 - 匹配总分使用确定性规则，不由大模型直接评分；不自动淘汰候选人。
 - 当前为演示原型，没有登录、用户隔离和持久化云数据库，不应上传真实简历。
 
-分享时建议将链接文字写作「AI-HR 招聘工作台｜在线体验」，源码链接写作「项目说明与源码」。当前链接仍是既有 Streamlit 地址；改名后需同步更新此处，不能仅修改显示文字来改变网址。
+分享时建议将链接文字写作「FF · AI 招聘工作台｜在线体验」，源码链接写作「项目说明与源码」。在线地址为 https://ff-hr-workbench.streamlit.app/ 。
 
 简历模块已支持 PDF/DOCX 上传、解析、人工修改和确认保存。首次使用请重新安装
 `requirements.txt` 中的依赖，详见 [简历模块说明](pages/RESUME_README.md)。
