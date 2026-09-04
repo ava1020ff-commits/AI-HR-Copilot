@@ -5,7 +5,9 @@ import streamlit as st
 
 def apply_saas_theme(section: str) -> None:
     """应用克制的企业 HR SaaS 视觉，不修改业务状态。"""
-    st.markdown(
+    # 样式通过专用 HTML 通道注入，避免 Markdown 将标签作为正文展示。
+    # 仅使用固定样式，不插入用户数据，也不启用 JavaScript。
+    st.html(
         """
         <style>
         :root { --hr-ink:#172033; --hr-muted:#667085; --hr-line:#e7eaf0; --hr-accent:#3157a4; }
@@ -33,7 +35,6 @@ def apply_saas_theme(section: str) -> None:
         @media (max-width: 700px) { .block-container { padding-top:2rem; } h1 { font-size:1.9rem !important; } }
         </style>
         """,
-        unsafe_allow_html=True,
     )
     with st.sidebar:
         st.markdown("### AI Recruitment")

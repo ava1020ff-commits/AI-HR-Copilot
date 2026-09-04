@@ -12,7 +12,22 @@ def test_homepage_renders_without_errors() -> None:
     assert app.title[0].value == "AI Recruitment Copilot"
     assert len(app.metric) == 4
     assert len(app.columns) == 7
-    assert "一体化智能工作台" in app.markdown[1].value
+    assert any("从岗位与简历出发" in item.value for item in app.markdown)
+    assert not any("<style>" in item.value for item in app.markdown)
+    assert any("<style>" in item.proto.body for item in app.get("html"))
+    assert len(app.get("page_link")) == 5
+
+
+def test_homepage_database_error_is_not_zero(monkeypatch) -> None:
+    def unavailable():
+        raise OSError("test-only database failure")
+
+    monkeypatch.setattr("database.matching_records.list_jobs", unavailable)
+    app_path = Path(__file__).resolve().parents[1] / "app.py"
+    app = AppTest.from_file(str(app_path)).run(timeout=15)
+    assert not app.exception
+    assert all(metric.value == "—" for metric in app.metric)
+    assert "暂时无法读取" in app.warning[0].value
 
 
 def test_placeholder_packages_import() -> None:
