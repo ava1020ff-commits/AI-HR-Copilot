@@ -10,7 +10,7 @@ from streamlit.testing.v1 import AppTest
 from database.candidates import save_candidate
 from database.dashboard import STAGES, read_analytics, save_match_report, set_stage
 from database.jobs import save_job
-from services.dashboard import HIGH_MATCH_THRESHOLD, dashboard_metrics
+from services.dashboard import HIGH_MATCH_THRESHOLD, dashboard_metrics, scoring_scope
 from services.matching import calculate_match
 from services.resume_parser import FIELDS
 
@@ -49,6 +49,19 @@ def test_empty_metrics() -> None:
     assert metrics["candidate_count"] == metrics["job_count"] == 0
     assert metrics["average_score"] is None and metrics["high_match_count"] == 0
     assert list(metrics["funnel"].values()) == [0, 0, 0, 0, 0]
+
+
+def test_scoring_scope_separates_weights_and_criteria() -> None:
+    report = calculate_match(job(), candidate())
+    other = copy.deepcopy(report)
+    other["dimensions"][0]["max_score"] = 50
+    assert scoring_scope(report) != scoring_scope(other)
+    other = copy.deepcopy(report)
+    other["dimensions"][0]["criteria"][0]["criterion"] = "Java"
+    assert scoring_scope(report) != scoring_scope(other)
+    other = copy.deepcopy(report)
+    other["total_score"] = 0
+    assert scoring_scope(report) == scoring_scope(other)
 
 
 def test_metrics_and_normalized_dimensions() -> None:

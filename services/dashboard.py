@@ -1,10 +1,20 @@
 """Recruitment Dashboard 纯统计逻辑。"""
 
 from collections import defaultdict
+import json
 
 HIGH_MATCH_THRESHOLD = 80.0
-FUNNEL_STAGES = ("收到简历", "AI辅助筛选", "HR人工确认", "进入面试", "Offer")
+FUNNEL_STAGES = ("已确认保存候选人（全库）", "已生成匹配报告", "HR人工确认", "进入面试", "Offer")
 STAGE_RANK = {"HR人工确认": 2, "进入面试": 3, "Offer": 4}
+
+
+def scoring_scope(report: dict) -> str:
+    """Group only identical model weights, criteria and scoring versions."""
+    return json.dumps([report.get("rule_version"), [
+        [d["dimension"], d["max_score"], d.get("requirement"),
+         [c["criterion"] for c in d.get("criteria", [])]]
+        for d in report.get("dimensions", [])
+    ]], ensure_ascii=False, sort_keys=True)
 
 
 def dashboard_metrics(jobs: list[dict], candidates: list[dict], analytics: dict) -> dict:

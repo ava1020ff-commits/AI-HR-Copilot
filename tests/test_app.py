@@ -16,7 +16,9 @@ def test_homepage_renders_without_errors() -> None:
     assert not any("AI 辅助分析 · HR 确认与决策" in item.value for item in app.caption)
     assert not any("<style>" in item.value for item in app.markdown)
     assert any("<style>" in item.proto.body for item in app.get("html"))
-    assert len(app.get("page_link")) == 11
+    assert len(app.get("page_link")) == 18
+    assert app.get("popover")[0].proto.popover.label == "菜单"
+    assert any(item.label == "开始工作 · 岗位管理 →" for item in app.get("page_link"))
     assert app.sidebar.get("page_link")[0].label == "招聘工作台"
 
 

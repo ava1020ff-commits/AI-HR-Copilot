@@ -8,7 +8,8 @@ import streamlit as st
 from database.matching_records import list_candidates, list_jobs
 from database.dashboard import save_match_report
 from services.matching import MatchingError, build_rubric, calculate_match
-from services.ui import apply_saas_theme
+from services.ui import apply_saas_theme, mode_label
+from services.match_explanation import render_dimension
 
 st.set_page_config(page_title="人岗匹配", page_icon="🔎", layout="wide")
 apply_saas_theme("智能匹配")
@@ -22,8 +23,8 @@ except (sqlite3.Error, OSError, ValueError):
 if not jobs or not candidates:
     st.warning("请先在 JD 解析模块保存一个岗位，并在简历解析模块确认保存一个候选人。")
     st.stop()
-job_id = st.selectbox("选择岗位", [item["id"] for item in jobs], format_func=lambda identifier: next(f"#{item['id']} · {item['label']} · {item['mode']}" for item in jobs if item["id"] == identifier))
-candidate_id = st.selectbox("选择候选人", [item["id"] for item in candidates], format_func=lambda identifier: next(f"#{item['id']} · {item['label']} · {item['mode']}" for item in candidates if item["id"] == identifier))
+job_id = st.selectbox("选择岗位", [item["id"] for item in jobs], format_func=lambda identifier: next(f"#{item['id']} · {item['label']} · {mode_label(item['mode'])}" for item in jobs if item["id"] == identifier))
+candidate_id = st.selectbox("选择候选人", [item["id"] for item in candidates], format_func=lambda identifier: next(f"#{item['id']} · {item['label']} · {mode_label(item['mode'])}" for item in candidates if item["id"] == identifier))
 job = next(item for item in jobs if item["id"] == job_id)
 candidate = next(item for item in candidates if item["id"] == candidate_id)
 selection = json.dumps([job, candidate], sort_keys=True, ensure_ascii=False)
@@ -33,7 +34,7 @@ if st.session_state.get("match_selection") != selection:
             del st.session_state[key]
     st.session_state["match_selection"] = selection
 if job["mode"] == "mock":
-    st.warning("此岗位来自固定 Mock 示例，本次结果仅用于测试，不能作为真实岗位结论。")
+    st.warning("此岗位为示例模式数据，本次结果仅供体验，不能作为真实岗位结论。")
 try:
     defaults = build_rubric(job["data"])
 except MatchingError as exc:
@@ -79,29 +80,13 @@ if "match_result" in st.session_state:
     ], hide_index=True, use_container_width=True)
     st.subheader("证据来源")
     st.caption("来源定位到已确认的简历结构化字段，不代表原文件页码。引用内容仍需人工核实。")
-    source_labels = {"skills": "技能", "work_experience": "工作经历", "internships": "实习经历", "projects": "项目经历", "education": "教育经历"}
     for dimension in result["dimensions"]:
         with st.expander(f"{dimension['dimension']} · {dimension['score']} / {dimension['max_score']}", expanded=True):
-            st.text(dimension["reason"])
-            st.caption(f"规则证据可信度：{dimension['confidence']}（不是能力概率）")
-            for criterion in dimension["criteria"]:
-                status = {1.0: "实践或学历证据", 0.5: "仅技能自述", 0.0: "暂无明确证据"}[criterion["attainment"]]
-                st.text(f"{criterion['criterion']} · {status}")
-                for evidence in criterion.get("evidence_sources", []):
-                    field = evidence["source"].split("[")[0]
-                    st.caption(f"{source_labels.get(field, field)} · {evidence['source']}")
-                    st.text(evidence["quote"])
-            # Older in-session snapshots retain their dimension-level evidence.
-            for evidence in dimension["evidence_sources"]:
-                if not any("evidence_sources" in item for item in dimension["criteria"]):
-                    st.caption("简历来源：" + evidence["source"])
-                    st.text(evidence["quote"])
-            if not dimension["evidence_sources"]:
-                st.text("暂无明确证据")
-    for key, label in (("strengths", "优势"), ("risks", "风险项"), ("questions_to_verify", "推荐面试问题")):
+            render_dimension(dimension)
+    for key, label in (("strengths", "优势"), ("risks", "待核实项"), ("questions_to_verify", "推荐面试问题")):
         st.subheader(label)
         if key == "risks":
-            st.caption("仅列岗位相关的证据缺口，不代表候选人不具备能力。")
+            st.caption("仅技能自述：缺少实践佐证；材料未提及：当前规则未找到明确支持证据，需复核原文，不代表不具备。信息矛盾须有相互冲突的具体材料才能标注，本规则不自动判定。")
         if key == "questions_to_verify":
             st.caption("根据本次匹配的待核实项生成，建议追问具体案例、个人贡献与可验证成果。")
         if not result[key]:

@@ -190,7 +190,7 @@ def test_page_computation_and_selection_change() -> None:
     assert not app.metric
     app.button[0].click().run()
     assert not app.exception and app.metric[0].value == "100.0"
-    assert {"匹配维度", "证据来源", "风险项", "推荐面试问题"}.issubset({item.value for item in app.subheader})
+    assert {"匹配维度", "证据来源", "待核实项", "推荐面试问题"}.issubset({item.value for item in app.subheader})
     assert all("淘汰" not in button.label for button in app.button)
 
 

@@ -11,16 +11,16 @@ from services.ui import apply_saas_theme
 st.set_page_config(page_title="JD 解析", page_icon="📋", layout="wide")
 apply_saas_theme("岗位管理")
 st.title("JD 解析")
-st.caption("粘贴岗位描述，提取要求并自动保存到本地 SQLite。")
+st.caption("粘贴岗位描述，解析要求并保存岗位。")
 config = LLMConfig.from_env()
-use_mock = st.checkbox("使用 Mock 测试数据", value=not bool(config.api_key))
+use_mock = st.checkbox("使用示例模式", value=not bool(config.api_key))
 if use_mock:
-    st.warning("Mock 模式：返回固定的 Python 工程师示例，与输入 JD 无关，不调用 AI。保存记录会标记为 mock。")
+    st.warning("示例模式：展示固定的 Python 工程师岗位，与输入内容无关，仅供体验。")
 else:
     st.info("真实模式：点击解析会将 JD 发送到配置的 LLM 服务。请先移除个人信息及敏感内容。")
-with st.expander("API 配置说明"):
+with st.expander("设置与技术说明"):
     st.write("通过环境变量或 Streamlit Secrets 配置 LLM_API_KEY、LLM_MODEL、LLM_BASE_URL（默认 https://api.openai.com/v1）。环境变量优先，修改后重启服务。")
-    st.caption("接口需支持 Chat Completions 的 JSON 模式。不配置密钥时默认使用 Mock。")
+    st.caption("接口需支持 Chat Completions 的 JSON 模式。未配置时使用示例模式（内部标记 mock）。岗位保存于 SQLite。")
 
 with st.form("jd_form"):
     jd = st.text_area("粘贴岗位 JD", height=320, max_chars=MAX_JD_LENGTH, placeholder="请输入岗位名称、职责、任职要求及加分项……")
@@ -46,10 +46,10 @@ if submitted:
 if "jd_result" in st.session_state:
     saved = st.session_state["jd_result"]
     result = saved["result"]
-    st.success(f"岗位已保存 · ID {saved['id']} · 模式 {saved['mode']}")
+    st.success(f"岗位已保存 · ID {saved['id']} · {'示例模式' if saved['mode'] == 'mock' else '智能解析'}")
     st.caption("以下是上次成功提交的结果；修改输入后请重新解析。胜任力模型为建议，需 HR 复核。")
     if saved["mode"] == "mock":
-        st.warning("以下为固定 Mock 示例，不代表对输入 JD 的真实分析。")
+        st.warning("以下为固定岗位示例，不代表对输入内容的真实分析。")
     st.subheader(result["job_title"])
     st.write("学历要求：", result["education"])
     st.write("经验要求：", result["experience"])

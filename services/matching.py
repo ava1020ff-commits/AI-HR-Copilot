@@ -167,7 +167,7 @@ def calculate_match(job: dict, candidate: dict, rubric: dict[str, list[str]] | N
             supported_weight += maximum * Decimal(sum(value > 0 for value in levels)) / len(terms)
         reason = f"{len(terms)} 个指标等分权重；实践/学历证据=1，技能自述=0.5，无证据=0；{maximum} × {float(ratio):.4f} = {score}。" if terms else "没有可执行评分指标，暂不计分；请 HR 补充明确口径。"
         dimensions.append({
-            "dimension": name, "score": float(score), "max_score": float(maximum),
+            "dimension": name, "requirement": item["description"], "score": float(score), "max_score": float(maximum),
             "evidence": quotes if quotes else [NO_EVIDENCE], "evidence_sources": sources,
             "reason": reason, "confidence": round(sum(confidences) / len(terms), 2) if terms else 0,
             "criteria": details,
@@ -177,10 +177,10 @@ def calculate_match(job: dict, candidate: dict, rubric: dict[str, list[str]] | N
         if ratio >= Decimal("0.75"):
             strengths.append(f"{name}：简历证据覆盖较充分（{score}/{maximum}），仍需核实实际水平。")
         if missing or not terms:
-            risks.append(f"{name}：" + ("暂无明确证据支持 " + "、".join(missing) if terms else "评分口径未明确") + "；不代表候选人不具备能力。")
+            risks.append((f"【材料未提及】{name}：当前规则未找到明确支持证据：" + "、".join(missing) + "；请复核原文，未识别不等于未提及，更不代表不具备能力。") if terms else f"【口径待明确】{name}：请先明确评分指标，不对候选人能力作判断。")
             questions.append(f"请围绕{name}补充具体案例、个人贡献和可核验成果" + (f"，重点核实：{'、'.join(missing)}。" if missing else "，并先明确评价指标。"))
         if any(value == Decimal("0.5") for value in levels):
-            risks.append(f"{name}部分证据仅为技能自述，尚缺实践佐证。")
+            risks.append(f"【仅技能自述】{name}：尚缺实践佐证，请补充具体项目、个人贡献与产出。")
             questions.append(f"请展示{name}相关的实际产出，并说明本人承担的工作。")
     total = sum(Decimal(str(dimension["score"])) for dimension in dimensions)
     coverage = round(float(supported_weight), 2)

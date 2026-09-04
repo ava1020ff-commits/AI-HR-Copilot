@@ -18,11 +18,13 @@ st.title("简历解析")
 st.caption("上传简历 → 解析 → 展示及人工修改 → 确认保存")
 st.info("仅保留职业相关字段。性别、年龄、照片、婚姻状况不作为匹配字段。原文件不落盘；保存前请人工复核并移除遗漏的敏感信息。")
 config = LLMConfig.from_env()
-use_local = st.checkbox("使用本地规则解析（无需 API）", value=not bool(config.api_key), key="resume_local")
+use_local = st.checkbox("使用本地解析", value=not bool(config.api_key), key="resume_local")
 if use_local:
-    st.warning("本地模式按教育、工作、实习、项目等章节标题提取，复杂排版可能漏项；请补全后保存。不是固定 Mock 数据。")
+    st.warning("本地解析按简历章节提取内容，复杂排版可能漏项；请复核补全后确认保存。")
 else:
-    st.caption("使用 LLM_API_KEY、LLM_MODEL、LLM_BASE_URL 配置；失败不会自动切换到本地模式。")
+    st.caption("智能解析失败时不会自动切换到本地解析。")
+with st.expander("设置与技术说明"):
+    st.write("智能解析使用 LLM_API_KEY、LLM_MODEL、LLM_BASE_URL 配置；本地解析无需 API。确认保存的记录存入 SQLite。")
 uploaded = st.file_uploader("上传简历（PDF / DOCX，最大 10 MB）", type=["pdf", "docx"], key="resume_upload")
 content = uploaded.getvalue() if uploaded is not None else b""
 source = hashlib.sha256(content).hexdigest() + (uploaded.name if uploaded is not None else "") + str(use_local)
@@ -78,7 +80,7 @@ if "resume_draft" in st.session_state:
             except ResumeError as exc:
                 st.error(str(exc))
             except (sqlite3.Error, OSError):
-                st.error("保存失败，请检查 SQLite 目录权限或数据库锁定状态。修改内容仍保留，可重试。")
+                st.error("保存失败，修改内容仍保留，请稍后重试或联系维护者检查存储权限。")
     if "resume_saved" in st.session_state:
         saved = st.session_state["resume_saved"]
         st.success(f"上次确认的简历已保存 · 候选人 ID {saved['id']}")
