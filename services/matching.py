@@ -151,7 +151,10 @@ def calculate_match(job: dict, candidate: dict, rubric: dict[str, list[str]] | N
             level = best["level"] if best else Decimal("0")
             levels.append(level)
             confidences.append(best["confidence"] if best else 0)
-            details.append({"criterion": term, "attainment": float(level)})
+            details.append({
+                "criterion": term, "attainment": float(level),
+                "evidence_sources": [{"source": best["source"], "quote": best["quote"]}] if best else [],
+            })
             if best:
                 if best["quote"] not in quotes:
                     quotes.append(best["quote"])

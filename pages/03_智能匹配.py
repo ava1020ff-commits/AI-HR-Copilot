@@ -71,17 +71,39 @@ if "match_result" in st.session_state:
     st.write("评估建议：", result["recommendation"])
     st.write("加权证据覆盖率：", f"{result['evidence_coverage']}%")
     st.warning(result["notice"])
+    st.subheader("匹配维度")
+    st.dataframe([
+        {"维度": item["dimension"], "得分": item["score"], "满分": item["max_score"],
+         "证据条数": len(item["evidence_sources"])}
+        for item in result["dimensions"]
+    ], hide_index=True, use_container_width=True)
+    st.subheader("证据来源")
+    st.caption("来源定位到已确认的简历结构化字段，不代表原文件页码。引用内容仍需人工核实。")
+    source_labels = {"skills": "技能", "work_experience": "工作经历", "internships": "实习经历", "projects": "项目经历", "education": "教育经历"}
     for dimension in result["dimensions"]:
         with st.expander(f"{dimension['dimension']} · {dimension['score']} / {dimension['max_score']}", expanded=True):
             st.text(dimension["reason"])
-            st.write("confidence：", dimension["confidence"])
+            st.caption(f"规则证据可信度：{dimension['confidence']}（不是能力概率）")
+            for criterion in dimension["criteria"]:
+                status = {1.0: "实践或学历证据", 0.5: "仅技能自述", 0.0: "暂无明确证据"}[criterion["attainment"]]
+                st.text(f"{criterion['criterion']} · {status}")
+                for evidence in criterion.get("evidence_sources", []):
+                    field = evidence["source"].split("[")[0]
+                    st.caption(f"{source_labels.get(field, field)} · {evidence['source']}")
+                    st.text(evidence["quote"])
+            # Older in-session snapshots retain their dimension-level evidence.
             for evidence in dimension["evidence_sources"]:
-                st.caption("简历来源：" + evidence["source"])
-                st.text(evidence["quote"])
+                if not any("evidence_sources" in item for item in dimension["criteria"]):
+                    st.caption("简历来源：" + evidence["source"])
+                    st.text(evidence["quote"])
             if not dimension["evidence_sources"]:
                 st.text("暂无明确证据")
-    for key, label in (("strengths", "优势"), ("risks", "风险与信息缺口"), ("questions_to_verify", "待核实问题")):
+    for key, label in (("strengths", "优势"), ("risks", "风险项"), ("questions_to_verify", "推荐面试问题")):
         st.subheader(label)
+        if key == "risks":
+            st.caption("仅列岗位相关的证据缺口，不代表候选人不具备能力。")
+        if key == "questions_to_verify":
+            st.caption("根据本次匹配的待核实项生成，建议追问具体案例、个人贡献与可验证成果。")
         if not result[key]:
             st.caption("暂无明确结论")
         for text in result[key]:
