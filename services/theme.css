@@ -49,15 +49,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 hr { border-color: var(--hr-line); margin: 24px 0; }
 [data-testid="stSidebar"] { background: var(--hr-black); color: var(--hr-white); }
 [data-testid="stSidebar"] h3 { color: var(--hr-white); }
-[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p { color: var(--hr-dark-muted); }
-[data-testid="stSidebar"] [data-testid="stPageLink"] a { color: var(--hr-dark-muted); padding: 12px 16px; }
-[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] { color: var(--hr-on-dark); background: var(--hr-dark); }
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p { color: var(--hr-dark-muted) !important; }
+[data-testid="stSidebar"] [data-testid="stPageLink"] a { color: var(--hr-dark-muted) !important; padding: 12px 16px; opacity: 1; }
+/* Streamlit styles the nested label separately; anchor color alone is insufficient. */
+[data-testid="stSidebar"] [data-testid="stPageLink"] a * { color: inherit !important; opacity: 1; }
+[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] { color: var(--hr-white) !important; background: var(--hr-dark); }
 [data-testid="stSidebar"] button { color: var(--hr-white); }
 [data-testid="stSidebar"] hr { border-color: var(--hr-dark); }
 /* Stable, app-owned hooks for navigation and the three workflow cards. */
 [data-testid="stSidebar"] [class*="st-key-nav_active_"] { background: var(--hr-dark); border-radius: 10px; border-left: 3px solid var(--hr-on-dark); }
-[data-testid="stSidebar"] [class*="st-key-nav_active_"] a { color: var(--hr-white); font-weight: 600; }
-[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover { background: var(--hr-dark); color: var(--hr-white); }
+[data-testid="stSidebar"] [class*="st-key-nav_active_"] [data-testid="stPageLink"] a { color: var(--hr-white) !important; background: var(--hr-dark); font-weight: 600; }
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover,
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:focus-visible { background: var(--hr-dark); color: var(--hr-white) !important; }
 [class*="st-key-workflow_"] { background: var(--hr-white); border: 1px solid var(--hr-line) !important; border-radius: var(--hr-card-radius) !important; padding: 24px !important; min-height: 216px; }
 [class*="st-key-workflow_"] h3 { font-size: 19px !important; }
 [class*="st-key-workflow_"] [data-testid="stPageLink"] a { color: var(--hr-accent); }
