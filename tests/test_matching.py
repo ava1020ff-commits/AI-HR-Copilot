@@ -172,7 +172,7 @@ def test_database_selection_and_read_only(tmp_path) -> None:
 
 def test_page_empty_state() -> None:
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
-    assert not app.exception and app.warning
+    assert not app.exception and any("暂无可匹配岗位" in item.value for item in app.markdown)
     assert not app.selectbox
 
 
@@ -190,7 +190,7 @@ def test_page_computation_and_selection_change() -> None:
     assert not app.metric
     app.button[0].click().run()
     assert not app.exception and app.metric[0].value == "100.0"
-    assert {"匹配维度", "证据来源", "待核实项", "推荐面试问题"}.issubset({item.value for item in app.subheader})
+    assert {"维度匹配", "证据来源", "待核实项", "推荐面试问题"}.issubset({item.value for item in app.subheader})
     assert all("淘汰" not in button.label for button in app.button)
 
 
@@ -206,4 +206,4 @@ def test_criterion_evidence_is_traceable() -> None:
 def test_navigation() -> None:
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run()
     app.switch_page("pages/03_智能匹配.py").run()
-    assert not app.exception and app.title[0].value == "人岗匹配"
+    assert not app.exception and app.title[0].value == "AI 人岗匹配"

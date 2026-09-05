@@ -8,16 +8,15 @@ import streamlit as st
 from database.dashboard import STAGES, read_analytics, set_stage
 from database.matching_records import list_candidates, list_jobs
 from services.dashboard import HIGH_MATCH_THRESHOLD, dashboard_metrics, scoring_scope
-from services.ui import apply_saas_theme
+from services.ui import apply_saas_theme, render_empty_state, render_page_header, render_section_title
 
-st.set_page_config(page_title="Recruitment Dashboard", page_icon="📊", layout="wide")
+st.set_page_config(page_title="招聘分析", page_icon="📊", layout="wide")
 apply_saas_theme("招聘分析")
-st.title("Recruitment Dashboard")
-st.caption("仅统计已保存的数据；不推测招聘阶段，不执行自动淘汰或录用。")
+render_page_header("招聘分析", "通过招聘数据观察人才质量与招聘进度")
 try:
     jobs, candidates, analytics = list_jobs(), list_candidates(), read_analytics()
     if jobs:
-        selected_job = st.selectbox("统计岗位", [j["id"] for j in jobs], format_func=lambda value: next(f"#{j['id']} · {j['label']}" for j in jobs if j["id"] == value))
+        selected_job = st.selectbox("统计岗位", [j["id"] for j in jobs], format_func=lambda value: next(j["label"] for j in jobs if j["id"] == value))
         scoped_reports = [r for r in analytics["reports"] if r["job_id"] == selected_job and r["candidate_id"] in {c["id"] for c in candidates}]
         scopes = list(dict.fromkeys(scoring_scope(r["report"]) for r in scoped_reports))
         if scopes:
@@ -43,16 +42,21 @@ st.caption(f"n={metrics['report_count']}：所选岗位、同一评分口径的�
 if metrics["orphan_report_count"]:
     st.warning(f"有 {metrics['orphan_report_count']} 条报告找不到当前岗位或候选人，已从统计中排除。")
 
+if not metrics["report_count"]:
+    render_empty_state("▥", "暂无招聘分析数据", "完成至少一份候选人匹配报告后，即可查看招聘漏斗与人才质量洞察。", action_path="pages/03_智能匹配.py", action_label="开始 AI 匹配")
+    st.stop()
+
 def no_data_figure(title: str, x_title: str = "") -> go.Figure:
     figure = go.Figure()
     figure.add_annotation(text="暂无可统计数据", x=0.5, y=0.5, xref="paper", yref="paper", showarrow=False)
     figure.update_layout(title=title, xaxis_title=x_title, template="plotly_white", height=380)
     return figure
 
+render_section_title("人才质量洞察")
 left, right = st.columns(2)
 with left:
     if metrics["scores"]:
-        distribution = go.Figure(go.Histogram(x=metrics["scores"], xbins={"start": 0, "end": 100, "size": 10}, marker_color="#2563EB"))
+        distribution = go.Figure(go.Histogram(x=metrics["scores"], xbins={"start": 0, "end": 100, "size": 10}, marker_color="#0066CC"))
         distribution.update_layout(title="候选人匹配分分布", xaxis_title="匹配分", yaxis_title="人岗组合数", bargap=0.08, template="plotly_white", height=380)
     else:
         distribution = no_data_figure("候选人匹配分分布", "匹配分")
@@ -61,7 +65,7 @@ with right:
     labels = {item["id"]: item["label"] for item in jobs}
     rows = [(labels.get(key, str(key)), metrics["report_count"]) for key in metrics["job_averages"]]
     if rows:
-        job_chart = go.Figure(go.Bar(x=[row[1] for row in rows], y=[row[0] for row in rows], orientation="h", marker_color="#0F766E", text=[row[1] for row in rows], textposition="auto"))
+        job_chart = go.Figure(go.Bar(x=[row[1] for row in rows], y=[row[0] for row in rows], orientation="h", marker_color="#0066CC", text=[row[1] for row in rows], textposition="auto"))
         job_chart.update_layout(title="当前口径样本量", xaxis_title="最新报告数 n", yaxis_title="岗位", template="plotly_white", height=380)
     else:
         job_chart = no_data_figure("当前口径样本量", "最新报告数 n")
@@ -71,13 +75,13 @@ left, right = st.columns(2)
 with left:
     dimensions = sorted(metrics["dimension_averages"].items(), key=lambda row: row[1])
     if dimensions:
-        dimension_chart = go.Figure(go.Bar(x=[row[1] for row in dimensions], y=[row[0] for row in dimensions], orientation="h", marker_color="#7C3AED", text=[row[1] for row in dimensions], textposition="auto"))
+        dimension_chart = go.Figure(go.Bar(x=[row[1] for row in dimensions], y=[row[0] for row in dimensions], orientation="h", marker_color="#0066CC", text=[row[1] for row in dimensions], textposition="auto"))
         dimension_chart.update_layout(title="能力维度平均得分率", xaxis_title="平均得分率（%）", yaxis_title="能力维度", xaxis_range=[0, 100], template="plotly_white", height=380)
     else:
         dimension_chart = no_data_figure("能力维度平均得分率", "平均得分率（%）")
     st.plotly_chart(dimension_chart, use_container_width=True, key="dimension_average")
 with right:
-    funnel = go.Figure(go.Bar(y=list(metrics["funnel"]), x=list(metrics["funnel"].values()), orientation="h"))
+    funnel = go.Figure(go.Bar(y=list(metrics["funnel"]), x=list(metrics["funnel"].values()), orientation="h", marker_color="#0066CC"))
     funnel.update_layout(title="记录数量（非转化漏斗）", template="plotly_white", height=380)
     st.plotly_chart(funnel, use_container_width=True, key="recruitment_funnel")
 

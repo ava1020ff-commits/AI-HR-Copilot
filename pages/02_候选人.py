@@ -10,13 +10,13 @@ from database.matching_records import list_candidates
 from services.candidate_search import filter_candidates
 from services.jd_parser import LLMConfig
 from services.resume_parser import FIELDS, ResumeError, extract_resume, parse_resume, sanitize_text, validate_resume
-from services.ui import apply_saas_theme
+from services.ui import apply_saas_theme, render_empty_state, render_page_header, render_section_title, render_tags
 
-st.set_page_config(page_title="简历解析", page_icon="📄", layout="wide")
+st.set_page_config(page_title="候选人", page_icon="📄", layout="wide")
 apply_saas_theme("候选人")
-st.title("简历解析")
-st.caption("上传简历 → 解析 → 展示及人工修改 → 确认保存")
-st.info("仅保留职业相关字段。性别、年龄、照片、婚姻状况不作为匹配字段。原文件不落盘；保存前请人工复核并移除遗漏的敏感信息。")
+render_page_header("候选人", "管理人才库并通过 AI 解析候选人简历")
+st.caption("仅保留职业相关字段；原文件不落盘。保存前请人工复核并移除敏感信息。")
+render_section_title("导入候选人", "上传 PDF 或 DOCX 简历，解析后由 HR 确认加入人才库", ai=True)
 config = LLMConfig.from_env()
 use_local = st.checkbox("使用本地解析", value=not bool(config.api_key), key="resume_local")
 if use_local:
@@ -57,7 +57,7 @@ if st.button("解析简历", type="primary", disabled=uploaded is None):
 
 if "resume_draft" in st.session_state:
     draft = st.session_state["resume_draft"]
-    st.subheader("解析结果 · 待 HR 确认")
+    render_section_title("候选人档案 · 待 HR 确认")
     st.caption("当前尚未自动保存。每行一条记录；可增加、删除或改写内容。姓名只用于识别候选人，不用于匹配。")
     with st.expander("查看提取文本（已过滤常见敏感片段，可能有漏项）"):
         st.text(draft["text"])
@@ -83,7 +83,7 @@ if "resume_draft" in st.session_state:
                 st.error("保存失败，修改内容仍保留，请稍后重试或联系维护者检查存储权限。")
     if "resume_saved" in st.session_state:
         saved = st.session_state["resume_saved"]
-        st.success(f"上次确认的简历已保存 · 候选人 ID {saved['id']}")
+        st.success(f"候选人已加入人才库 · ID {saved['id']}")
         st.caption("下方是已保存快照；继续修改表单后需要再次确认保存。")
         st.json(saved["result"])
     else:
@@ -91,7 +91,7 @@ if "resume_draft" in st.session_state:
             st.json(draft["result"])
 
 st.divider()
-st.subheader("已保存候选人")
+render_section_title("人才库", "搜索并查看经 HR 确认保存的候选人")
 st.caption("仅展示经 HR 确认保存的记录。搜索和筛选不会改变匹配分数或招聘状态。")
 try:
     records = list_candidates()
@@ -99,7 +99,7 @@ except (sqlite3.Error, OSError, ValueError):
     st.error("候选人列表读取失败，请检查数据库配置与权限。")
 else:
     if not records:
-        st.info("暂无已保存候选人，请先上传简历并确认保存。")
+        render_empty_state("♙", "暂无候选人", "导入候选人后，可进行 AI 人岗匹配与面试评估。")
     else:
         query = st.text_input("搜索候选人", placeholder="姓名、ID、技能、项目或经历；多个词用空格分隔", key="candidate_query")
         education_options = sorted({item for record in records for item in record["data"].get("education", [])})
@@ -121,11 +121,14 @@ else:
                  "教育记录": "；".join(record["data"].get("education", [])),
                  "技能": "、".join(record["data"].get("skills", []))}
                 for record in filtered
-            ], hide_index=True, use_container_width=True)
+            ], hide_index=True, width="stretch", column_config={
+                "ID": st.column_config.NumberColumn("ID", format="%d", width="small"),
+            })
             chosen = st.selectbox("查看候选人详情", [record["id"] for record in filtered],
                 format_func=lambda identifier: next(f"{r['label']} · ID {identifier}" for r in filtered if r["id"] == identifier))
             data = next(record["data"] for record in filtered if record["id"] == chosen)
             with st.expander("职业经历与技能详情"):
+                render_tags(data.get("skills", []))
                 for field, label in FIELDS.items():
                     st.markdown(f"**{label}**")
                     st.text("\n".join(data.get(field, [])) or "未提供")

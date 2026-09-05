@@ -3,6 +3,7 @@
 import copy
 import json
 import math
+import re
 from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
@@ -71,6 +72,37 @@ def validate_jd(jd: str) -> str:
     if len(jd) > MAX_JD_LENGTH:
         raise JDParseError(f"JD 不能超过 {MAX_JD_LENGTH} 个字符。")
     return jd.strip()
+
+
+def parse_jd_local(jd: str, job_title: str = "") -> dict:
+    """Conservative keyword extraction for a real JD without external calls."""
+    text = validate_jd(jd)
+    title = job_title.strip() or next((line.strip(" ：:") for line in text.splitlines()
+        if line.strip() and not re.match(r"^(工作|岗位)?职责|任职要求|职位描述|\d+[、.]", line.strip())), "岗位名称未提及")
+    education = next((value for value in ("博士", "硕士", "本科", "大专", "专科") if value in text), "未提及")
+    experience_match = re.search(r"(?:经验)?\s*([一二三四五六七八九十\d]+)\s*年(?:以上|及以上)?", text)
+    experience = experience_match.group(0).strip() if experience_match else "未提及"
+    catalogue = (
+        "Python", "Java", "SQL", "Excel", "Tableau", "Power BI", "RAG", "大模型",
+        "数据分析", "需求分析", "团队管理", "客户服务", "客服运营", "项目管理",
+        "流程优化", "成本控制", "用户研究", "产品设计", "系统迭代",
+    )
+    hard = [term for term in catalogue if term.lower() in text.lower()]
+    soft_catalogue = ("沟通协作", "跨团队协作", "团队建设", "行业洞察", "创新")
+    soft = [term for term in soft_catalogue if term in text]
+    explicit_bonus = [term for term in hard if re.search(rf"{re.escape(term)}.{{0,20}}(?:优先|加分)", text, re.I)]
+    dimensions = (hard + soft)[:5]
+    if not dimensions:
+        raise JDParseError("本地解析未识别到明确的职业能力关键词，请补充岗位名称、职责与要求，或使用智能解析。")
+    quotient, remainder = divmod(100, len(dimensions))
+    model = [{"dimension": term, "weight": quotient + (1 if index < remainder else 0),
+              "description": f"本地规则从 JD 明确识别：{term}；需 HR 复核。"}
+             for index, term in enumerate(dimensions)]
+    return validate_job({
+        "job_title": title[:200], "education": education, "experience": experience,
+        "hard_skills": hard, "soft_skills": soft, "bonus_skills": explicit_bonus,
+        "competency_model": model,
+    })
 
 
 def validate_job(data: object) -> dict:

@@ -18,10 +18,12 @@ def test_demo_records_are_independent() -> None:
     assert build_demo()[1]["skills"] == ["RAG"]
 
 
-def test_demo_explanation_renders() -> None:
+def test_demo_explanation_renders(monkeypatch, tmp_path) -> None:
     from pathlib import Path
     from streamlit.testing.v1 import AppTest
 
+    monkeypatch.setenv("JD_DATABASE_PATH", str(tmp_path / "empty.sqlite3"))
+    monkeypatch.setenv("RESUME_DATABASE_PATH", str(tmp_path / "empty.sqlite3"))
     app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
     app.button(key="portfolio_demo").click().run()
     assert not app.exception

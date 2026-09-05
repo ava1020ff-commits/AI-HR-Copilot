@@ -132,7 +132,7 @@ def test_sensitive_information_not_quoted() -> None:
 
 def test_page_empty_state() -> None:
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
-    assert not app.exception and app.warning
+    assert not app.exception and any("还不能生成面试方案" in item.value for item in app.markdown)
 
 
 def test_page_generates_and_clears_on_change() -> None:
@@ -144,7 +144,8 @@ def test_page_generates_and_clears_on_change() -> None:
     save_candidate(second, "local", confirmed=True)
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + PAGE.name).run()
     app.button[0].click().run()
-    assert not app.exception and app.success and app.json
+    assert not app.exception and app.json
+    assert any("AI 已生成结构化面试方案" in item.value for item in app.subheader)
     app.selectbox[1].select(1).run()
     assert not app.success and "interview_result" not in app.session_state
 
@@ -166,4 +167,4 @@ def test_page_reuses_matching_report() -> None:
 def test_navigation() -> None:
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run()
     app.switch_page("pages/04_面试助手.py").run()
-    assert not app.exception and app.title[0].value == "面试助手"
+    assert not app.exception and app.title[0].value == "AI 面试助手"

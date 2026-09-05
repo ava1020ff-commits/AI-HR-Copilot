@@ -8,23 +8,27 @@ import streamlit as st
 from database.matching_records import list_candidates, list_jobs
 from database.dashboard import save_match_report
 from services.matching import MatchingError, build_rubric, calculate_match
-from services.ui import apply_saas_theme, mode_label
+from services.ui import apply_saas_theme, mode_label, render_ai_intro, render_empty_state, render_page_header, render_section_title
 from services.match_explanation import render_dimension
 
-st.set_page_config(page_title="人岗匹配", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="AI 人岗匹配", page_icon="🔎", layout="wide")
 apply_saas_theme("智能匹配")
-st.title("人岗匹配")
-st.info("仅辅助人工评估，不自动淘汰候选人。总分由岗位能力模型各维度得分相加，不调用大模型评分。")
+render_page_header("AI 人岗匹配", "基于岗位要求与候选人经历进行多维度匹配分析")
+render_ai_intro("AI Match", "使用可复现的评分规则整理证据，最终判断由 HR 完成。")
 try:
     jobs, candidates = list_jobs(), list_candidates()
 except (sqlite3.Error, OSError, ValueError):
     st.error("无法读取岗位或候选人数据，请检查数据库及已保存记录。")
     st.stop()
-if not jobs or not candidates:
-    st.warning("请先在 JD 解析模块保存一个岗位，并在简历解析模块确认保存一个候选人。")
+if not jobs:
+    render_empty_state("▣", "暂无可匹配岗位", "请先创建并保存岗位。", action_path="pages/01_岗位管理.py", action_label="＋ 创建岗位")
     st.stop()
-job_id = st.selectbox("选择岗位", [item["id"] for item in jobs], format_func=lambda identifier: next(f"#{item['id']} · {item['label']} · {mode_label(item['mode'])}" for item in jobs if item["id"] == identifier))
-candidate_id = st.selectbox("选择候选人", [item["id"] for item in candidates], format_func=lambda identifier: next(f"#{item['id']} · {item['label']} · {mode_label(item['mode'])}" for item in candidates if item["id"] == identifier))
+if not candidates:
+    render_empty_state("♙", "暂无候选人", "导入候选人后即可开始 AI 人岗匹配。", action_path="pages/02_候选人.py", action_label="＋ 导入候选人")
+    st.stop()
+selectors = st.columns(2)
+job_id = selectors[0].selectbox("岗位", [item["id"] for item in jobs], format_func=lambda identifier: next(f"{item['label']} · {mode_label(item['mode'])}" for item in jobs if item["id"] == identifier))
+candidate_id = selectors[1].selectbox("候选人", [item["id"] for item in candidates], format_func=lambda identifier: next(f"{item['label']} · {mode_label(item['mode'])}" for item in candidates if item["id"] == identifier))
 job = next(item for item in jobs if item["id"] == job_id)
 candidate = next(item for item in candidates if item["id"] == candidate_id)
 selection = json.dumps([job, candidate], sort_keys=True, ensure_ascii=False)
@@ -40,8 +44,7 @@ try:
 except MatchingError as exc:
     st.error(str(exc))
     st.stop()
-st.subheader("核对本次评分口径")
-st.caption("权重来自已保存岗位，不可在此修改。默认指标为规则建议，请按岗位真实要求核对。未知指标留空将提示信息不足。")
+render_section_title("核对本次评分口径", "权重来自已保存岗位，默认指标可由 HR 按真实要求核对。")
 with st.expander("评分规则与限制", expanded=False):
     st.write("同一维度的指标等分权重；明确实践描述或学历达标=1，技能栏自述=0.5，无明确证据=0。重复描述不加分；只看职位名称不加分。")
     st.write("confidence 是规则证据可信度（0～1），不是候选人能力概率。关键词、否定及职位识别是保守规则，可能漏识别，需要人工核对。")
@@ -53,7 +56,7 @@ with st.form("match_form"):
         st.text(f"{name} · 满分 {dimension['weight']} · {dimension['description']}")
         value = st.text_area(f"{name}评分指标（每行一项）", value="\n".join(defaults[name]), key=f"match_criteria_{index}", height=90)
         rubric[name] = [line.strip() for line in value.splitlines() if line.strip()]
-    submitted = st.form_submit_button("计算匹配结果", type="primary")
+    submitted = st.form_submit_button("✦ 开始 AI 匹配", type="primary")
 if submitted:
     st.session_state.pop("match_result", None)
     try:
@@ -66,18 +69,29 @@ if submitted:
         st.error("匹配结果已计算但统计快照保存失败，请检查数据库后重试。")
 if "match_result" in st.session_state:
     result = st.session_state["match_result"]
-    st.subheader("匹配结果")
+    render_section_title("匹配结果", "本次结果来自当前岗位、候选人与评分口径", ai=True)
     st.caption("以下为上次点击计算时的快照；修改评分指标后请重新计算。")
-    st.metric("总分 / 100", result["total_score"])
-    st.write("评估建议：", result["recommendation"])
-    st.write("加权证据覆盖率：", f"{result['evidence_coverage']}%")
-    st.warning(result["notice"])
-    st.subheader("匹配维度")
+    score_columns = st.columns([1, 2])
+    with score_columns[0]:
+        with st.container(border=True):
+            st.metric("综合匹配度", result["total_score"], help="满分 100")
+            st.progress(float(result["total_score"]) / 100)
+            st.caption(result["recommendation"])
+    with score_columns[1]:
+        with st.container(border=True):
+            st.markdown("### ✦ AI 推荐理由")
+            st.write(f"当前证据覆盖率为 {result['evidence_coverage']}%。")
+            st.caption(result["notice"])
+    render_section_title("维度匹配")
     st.dataframe([
         {"维度": item["dimension"], "得分": item["score"], "满分": item["max_score"],
          "证据条数": len(item["evidence_sources"])}
         for item in result["dimensions"]
-    ], hide_index=True, use_container_width=True)
+    ], hide_index=True, width="stretch", column_config={
+        "得分": st.column_config.NumberColumn("得分", format="%.1f", width="small"),
+        "满分": st.column_config.NumberColumn("满分", format="%.1f", width="small"),
+        "证据条数": st.column_config.NumberColumn("证据条数", format="%d", width="small"),
+    })
     st.subheader("证据来源")
     st.caption("来源定位到已确认的简历结构化字段，不代表原文件页码。引用内容仍需人工核实。")
     for dimension in result["dimensions"]:

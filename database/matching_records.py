@@ -16,16 +16,25 @@ def _read(path: Path, table: str, label: str) -> list[dict]:
         exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone()
         if not exists:
             return []
-        rows = connection.execute(f"SELECT id, {label}, parsed_json, mode FROM {table} ORDER BY id DESC").fetchall()
+        columns = {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
+        metadata = ", work_location, salary_range" if table == "jd_jobs" and {"work_location", "salary_range"} <= columns else ""
+        rows = connection.execute(f"SELECT id, {label}, parsed_json, mode{metadata} FROM {table} ORDER BY id DESC").fetchall()
     result = []
-    for identifier, name, payload, mode in rows:
+    for row in rows:
+        identifier, name, payload, mode = row[:4]
         try:
             data = json.loads(payload)
             if not isinstance(data, dict):
                 raise ValueError("invalid record")
         except (json.JSONDecodeError, ValueError, TypeError):
             raise ValueError("数据库存在无效 JSON 记录，请先检查已保存数据。") from None
-        result.append({"id": identifier, "label": name, "data": data, "mode": mode})
+        record = {"id": identifier, "label": name, "data": data, "mode": mode}
+        if len(row) == 6:
+            if row[4]:
+                record["work_location"] = row[4]
+            if row[5]:
+                record["salary_range"] = row[5]
+        result.append(record)
     return result
 
 

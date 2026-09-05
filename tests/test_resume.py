@@ -223,7 +223,7 @@ def test_page_navigation() -> None:
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run()
     app.switch_page("pages/02_候选人.py").run()
     assert not app.exception
-    assert app.title[0].value == "简历解析"
+    assert app.title[0].value == "候选人"
 
 
 def test_save_failure_preserves_edits(monkeypatch) -> None:
