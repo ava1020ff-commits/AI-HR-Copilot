@@ -41,8 +41,6 @@ with st.container(border=True, key=f"job_detail_{selected_id}"):
     render_tags(result.get("hard_skills", []) + result.get("soft_skills", []))
     with st.expander("查看岗位职责与完整 JD"):
         st.text(selected["source_jd"])
-    with st.expander("查看结构化岗位数据"):
-        st.json(result)
 
 with st.expander("编辑岗位", expanded=False):
     st.caption(f"当前保存方式：{mode_label(selected['mode'])}。更新后保留原岗位 ID。")

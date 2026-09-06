@@ -23,8 +23,6 @@ if use_local:
     st.warning("本地解析按简历章节提取内容，复杂排版可能漏项；请复核补全后确认保存。")
 else:
     st.caption("智能解析失败时不会自动切换到本地解析。")
-with st.expander("设置与技术说明"):
-    st.write("智能解析使用 LLM_API_KEY、LLM_MODEL、LLM_BASE_URL 配置；本地解析无需 API。确认保存的记录存入 SQLite。")
 uploaded = st.file_uploader("上传简历（PDF / DOCX，最大 10 MB）", type=["pdf", "docx"], key="resume_upload")
 content = uploaded.getvalue() if uploaded is not None else b""
 source = hashlib.sha256(content).hexdigest() + (uploaded.name if uploaded is not None else "") + str(use_local)
