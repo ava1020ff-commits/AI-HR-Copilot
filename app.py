@@ -1,4 +1,4 @@
-"""HireMind AI 招聘工作台首页。"""
+"""FF 人力工作台首页。"""
 
 import sqlite3
 import streamlit as st
@@ -12,11 +12,11 @@ from services.match_explanation import render_dimension
 
 
 def main() -> None:
-    st.set_page_config(page_title="HireMind AI", page_icon="💼", layout="wide")
+    st.set_page_config(page_title="FF 人力工作台", page_icon="💼", layout="wide")
     apply_saas_theme("首页")
-    render_page_header("招聘工作台", "集中查看岗位、候选人与 AI 招聘进展", action_path="pages/01_岗位管理.py", action_label="＋ 创建岗位")
+    render_page_header("人力工作台", "集中查看人力数据、待办事项与核心业务入口", action_path="pages/01_岗位管理.py", action_label="＋ 创建岗位")
     st.markdown("### 早上好 👋")
-    st.caption("这是你当前的招聘进展")
+    st.caption("这里汇总当前可用的人力数据与工作提醒")
     try:
         jobs = list_jobs()
         candidates = list_candidates()
@@ -27,7 +27,7 @@ def main() -> None:
         analytics = {"reports": [], "stages": []}
         metrics = None
         st.warning("招聘数据暂时无法读取，请检查数据库配置与访问权限。已有记录不会因此被清空。")
-    render_section_title("工作概览")
+    render_section_title("人力数据概览", "当前数据来自招聘管理；其他人力模块将在接入业务数据后展示")
     with st.container(key="home_metrics"):
         metric_columns = st.columns(4)
         metric_columns[0].metric("在招岗位", metrics["job_count"] if metrics else "—")
@@ -35,7 +35,26 @@ def main() -> None:
         metric_columns[2].metric("AI 匹配报告", metrics["report_count"] if metrics else "—")
         metric_columns[3].metric("进入面试", metrics["funnel"]["进入面试"] if metrics else "—")
 
-    render_section_title("招聘进展", "按岗位查看当前 AI 评估进度")
+    render_section_title("本月人力运营", "按固定顺序完成数据更新、异常核查与月报发布")
+    st.info("员工花名册、绩效和人力成本数据尚未接入。以下流程用于明确每月工作顺序，不代表任务已经完成。")
+    monthly_steps = (
+        ("01", "更新花名册", "确认人员、部门和在离职状态"),
+        ("02", "匹配绩效", "核对绩效月份与员工记录"),
+        ("03", "识别 PIP", "按已确认规则生成待复核名单"),
+        ("04", "校验离职", "检查离职日期与统计范围"),
+        ("05", "复核成本", "核对人数、绩效与成本口径"),
+        ("06", "发布月报", "完成异常说明后再发布结果"),
+    )
+    operation_columns = st.columns(3)
+    for index, (number, title, description) in enumerate(monthly_steps):
+        with operation_columns[index % 3]:
+            with st.container(border=True, key=f"monthly_operation_{number}"):
+                st.caption(f"步骤 {number} · 待接入")
+                st.markdown(f"### {title}")
+                st.write(description)
+    st.page_link("pages/12_人力成本.py", label="查看人力成本流程 →")
+
+    render_section_title("待办事项", "根据当前招聘数据生成，不代替人工判断")
     focus_message = "已有匹配结果，建议按岗位查看待核实项和招聘进展。"
     focus_path, focus_label = "pages/05_招聘分析.py", "查看招聘分析 →"
     if metrics and not metrics["job_count"]:
@@ -68,14 +87,14 @@ def main() -> None:
     else:
         render_empty_state("▣", "暂无在招岗位", "创建岗位后，可在这里查看候选人与 AI 匹配进展。", action_path="pages/01_岗位管理.py", action_label="＋ 创建岗位")
 
-    render_ai_intro("AI Recruiting Copilot", "让 AI 帮你完成招聘中的高频任务")
-    render_section_title("快捷操作")
-    quick_actions = st.columns(4)
+    render_ai_intro("人力智能助手", "连接招聘管理与人力分析，帮助整理高频人力工作")
+    render_section_title("快捷入口", "进入各人力模块开展工作")
+    quick_actions = st.columns(3)
     actions = (
-        ("pages/01_岗位管理.py", "新增岗位"),
-        ("pages/02_候选人.py", "导入候选人"),
+        ("pages/07_已保存岗位.py", "招聘管理"),
         ("pages/03_智能匹配.py", "开始匹配"),
-        ("pages/06_候选人寻访.py", "候选人寻访"),
+        ("pages/11_人员异动.py", "人员异动"),
+        ("pages/12_人力成本.py", "人力成本"),
     )
     for column, (path, label) in zip(quick_actions, actions):
         with column:

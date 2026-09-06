@@ -10,7 +10,7 @@ def test_homepage_renders_without_errors() -> None:
     app_path = Path(__file__).resolve().parents[1] / "app.py"
     app = AppTest.from_file(str(app_path)).run(timeout=15)
     assert not app.exception
-    assert app.title[0].value == "招聘工作台"
+    assert app.title[0].value == "人力工作台"
     assert len(app.metric) == 4
     assert len(app.columns) >= 8
     assert not any("从岗位与简历出发" in item.value for item in app.markdown)
@@ -20,7 +20,16 @@ def test_homepage_renders_without_errors() -> None:
     assert len(app.get("page_link")) >= 17
     assert app.get("popover")[0].proto.popover.label == "菜单"
     assert any(item.label == "开始匹配 →" for item in app.get("page_link"))
-    assert app.sidebar.get("page_link")[0].label == "▦  工作台"
+    assert any("本月人力运营" in item.value for item in app.subheader)
+    assert any("员工花名册、绩效和人力成本数据尚未接入" in item.value for item in app.info)
+    assert app.sidebar.get("page_link")[0].label == "▦  首页"
+    sidebar_captions = [item.value for item in app.sidebar.caption]
+    assert "招聘管理" in sidebar_captions
+    assert "人力分析" in sidebar_captions
+    sidebar_links = [item.label for item in app.sidebar.get("page_link")]
+    assert "◇  组织与岗位" not in sidebar_links
+    assert "◎  绩效管理" not in sidebar_links
+    assert "△  人才发展" not in sidebar_links
 
 
 def test_homepage_database_error_is_not_zero(monkeypatch) -> None:

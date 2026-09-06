@@ -1,4 +1,4 @@
-"""HireMind AI 的统一展示组件；不读取或修改业务数据。"""
+"""人力工作台的统一展示组件；不读取或修改业务数据。"""
 
 from html import escape
 from pathlib import Path
@@ -6,11 +6,19 @@ from pathlib import Path
 import streamlit as st
 
 NAVIGATION_GROUPS = (
-    ("工作台", (("app.py", "▦  工作台", "首页"),)),
-    ("招聘管理", (("pages/07_已保存岗位.py", "▣  岗位", "已保存岗位"), ("pages/02_候选人.py", "♙  候选人", "候选人"))),
-    ("AI COPILOT", (("pages/03_智能匹配.py", "✦  智能匹配", "智能匹配"), ("pages/04_面试助手.py", "◉  面试助手", "面试助手"))),
-    ("数据洞察", (("pages/05_招聘分析.py", "▥  招聘分析", "招聘分析"),)),
-    ("人才获取", (("pages/06_候选人寻访.py", "⌕  候选人寻访", "候选人寻访"),)),
+    ("首页", (("app.py", "▦  首页", "首页"),)),
+    ("招聘管理", (
+        ("pages/07_已保存岗位.py", "▣  岗位", "已保存岗位"),
+        ("pages/02_候选人.py", "♙  候选人", "候选人"),
+        ("pages/03_智能匹配.py", "✦  智能匹配", "智能匹配"),
+        ("pages/04_面试助手.py", "◉  面试", "面试助手"),
+        ("pages/06_候选人寻访.py", "⌕  人才寻访", "候选人寻访"),
+        ("pages/05_招聘分析.py", "▥  招聘分析", "招聘分析"),
+    )),
+    ("人力分析", (
+        ("pages/11_人员异动.py", "↔  人员异动", "人员异动"),
+        ("pages/12_人力成本.py", "▤  人力成本", "人力成本"),
+    )),
 )
 MOBILE_NAVIGATION = tuple(item for _, group in NAVIGATION_GROUPS for item in group) + (("pages/01_岗位管理.py", "＋  创建岗位", "JD 解析"),)
 
@@ -30,13 +38,16 @@ def apply_saas_theme(section: str) -> None:
                 st.page_link(path, label=label)
     with st.sidebar:
         with st.container(key="brand"):
-            st.markdown("### 招聘助手")
-            st.caption("AI Recruiting Copilot")
+            st.markdown("### FF 人力工作台")
+            st.caption("People Workspace")
         for group_name, items in NAVIGATION_GROUPS:
-            st.caption(group_name)
+            if group_name != "首页":
+                st.caption(group_name)
             for path, label, section_name in items:
                 active = section_name == section or (section == "首页" and path == "app.py")
-                with st.container(key=f"nav_{'active' if active else 'item'}_{Path(path).stem}"):
+                level = "subnav" if group_name != "首页" else "nav"
+                state = "active" if active else "item"
+                with st.container(key=f"{level}_{state}_{Path(path).stem}"):
                     st.page_link(path, label=label)
 
 
@@ -45,7 +56,8 @@ def render_page_header(title: str, subtitle: str, *, action_path: str | None = N
     left, right = st.columns([4, 1])
     with left:
         st.title(title)
-        st.caption(subtitle)
+        if subtitle:
+            st.caption(subtitle)
     if action_path and action_label:
         with right:
             with st.container(key="page_primary_action"):

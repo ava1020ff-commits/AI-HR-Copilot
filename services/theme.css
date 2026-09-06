@@ -113,6 +113,9 @@ hr { border-color: var(--hr-line); margin: 24px 0; }
 .st-key-mobile_menu { display: none; }
 .st-key-home_metrics [data-testid="stMetric"] { min-height: 96px; padding: 16px; }
 .st-key-home_metrics [data-testid="stMetricValue"] { font-size: 34px; }
+.st-key-data_card_ { min-height: 232px; }
+.st-key-data_card_ [data-testid="stFileUploaderDropzone"] { padding: 16px; min-height: 72px; }
+.st-key-data_card_ [data-testid="stFileUploaderDropzoneInstructions"] { display: none; }
 @media (max-width: 800px) {
   .st-key-mobile_menu { display: block; }
   h1 { font-size: 30px !important; margin-bottom: 8px !important; }
@@ -122,6 +125,7 @@ hr { border-color: var(--hr-line); margin: 24px 0; }
   .stApp [data-testid="stCaptionContainer"] p { color: #515154 !important; }
   [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p { color: var(--hr-muted) !important; }
   .st-key-mobile_menu button { min-height: 44px; color: var(--hr-ink); }
+  .st-key-data_card_ { min-height: 0; }
   [data-testid="stAlert"] { padding: 8px 16px; }
   [data-testid="stAlert"] p { font-size: 15px; line-height: 1.45; }
   [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:has([data-testid="stMetric"]) { flex: 1 1 45% !important; min-width: 0 !important; }

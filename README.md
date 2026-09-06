@@ -1,8 +1,8 @@
-# HireMind AI
+# FF 人力工作台
 
-AI Recruiting Copilot：AI 驱动的招聘决策工作台。
+People Workspace：连接招聘管理与人力分析的一体化工作台。
 
-面向招聘资料整理与人工评估的 AI-HR 作品集原型。
+当前已完整实现招聘管理流程；人力分析包含人员异动跟进，以及人力成本指标的核算、复核和周报流程。
 
 [在线体验](https://ff-hr-workbench.streamlit.app/) · [源代码](https://github.com/ava1020ff-commits/AI-HR-Copilot) · [部署指南](DEPLOYMENT.md)
 
@@ -23,7 +23,7 @@ AI Recruiting Copilot：AI 驱动的招聘决策工作台。
 - 匹配总分使用确定性规则，不由大模型直接评分；不自动淘汰候选人。
 - 当前为演示原型，没有登录、用户隔离和持久化云数据库，不应上传真实简历。
 
-分享时建议将链接文字写作「FF · AI 招聘工作台｜在线体验」，源码链接写作「项目说明与源码」。在线地址为 https://ff-hr-workbench.streamlit.app/ 。
+分享时建议将链接文字写作「FF 人力工作台｜在线体验」，源码链接写作「项目说明与源码」。在线地址为 https://ff-hr-workbench.streamlit.app/ 。
 
 简历模块已支持 PDF/DOCX 上传、解析、人工修改和确认保存。首次使用请重新安装
 `requirements.txt` 中的依赖，详见 [简历模块说明](pages/RESUME_README.md)。
@@ -36,7 +36,7 @@ JD 模块详见 [JD 模块说明](pages/JD_README.md)。云部署见 [部署指�
 
 Recruitment Dashboard 使用 Plotly 展示匹配分析和人工记录的招聘漏斗，统计口径见 [Dashboard 说明](pages/DASHBOARD_README.md)。
 
-Python + Streamlit 招聘助手，包含岗位、候选人、匹配、面试和招聘分析页面。公网部署目前仅适合虚构数据演示：没有登录与用户隔离，所有访客共享 SQLite 数据；云端本地文件不保证持久保存。
+Python + Streamlit 人力工作台，包含首页、招聘管理和人力分析。公网部署目前仅适合虚构数据演示：没有登录与用户隔离，所有访客共享 SQLite 数据；云端本地文件不保证持久保存。
 
 ## 本地启动
 
@@ -55,7 +55,7 @@ python -m venv .venv
 
 ```text
 app.py              首页入口
-pages/              五个功能页面
+pages/              招聘功能页与人力模块页面
 services/           业务服务、配置读取与 AI 集成
 database/           SQLite 数据访问层
 tests/              自动化测试
@@ -71,7 +71,7 @@ AGENTS.md           贡献与协作指南
 git diff --check
 ```
 
-测试通过 Streamlit AppTest 验证六个页面，并覆盖解析、保存、评分、面试问题与图表数据。
+测试通过 Streamlit AppTest 验证全部页面，并覆盖解析、保存、评分、面试问题与图表数据。
 目前没有独立构建步骤、覆盖率门槛或格式化工具。
 直接依赖已固定为本地验证版本；GitHub Actions 使用 Ubuntu + Python 3.12 回归测试。
 
