@@ -20,7 +20,7 @@ try:
         scoped_reports = [r for r in analytics["reports"] if r["job_id"] == selected_job and r["candidate_id"] in {c["id"] for c in candidates}]
         scopes = list(dict.fromkeys(scoring_scope(r["report"]) for r in scoped_reports))
         if scopes:
-            selected_scope = st.selectbox("评分口径（模型、指标与规则版本）", scopes, format_func=lambda value: f"口径 {scopes.index(value) + 1} · n={sum(scoring_scope(r['report']) == value for r in scoped_reports)}")
+            selected_scope = st.selectbox("评分规则版本", scopes, format_func=lambda value: f"版本 {scopes.index(value) + 1} · {sum(scoring_scope(r['report']) == value for r in scoped_reports)} 份报告")
             scoped_reports = [r for r in scoped_reports if scoring_scope(r["report"]) == selected_scope]
         scoped_ids = {r["candidate_id"] for r in scoped_reports}
         metrics = dashboard_metrics([j for j in jobs if j["id"] == selected_job], candidates, {
@@ -35,10 +35,10 @@ except (sqlite3.Error, OSError, ValueError):
 
 columns = st.columns(4)
 columns[0].metric("已确认保存候选人（全库）", metrics["candidate_count"])
-columns[1].metric("当前口径样本量 n", metrics["report_count"])
-columns[2].metric("当前口径平均证据分", "暂无数据" if metrics["average_score"] is None else f"{metrics['average_score']:.2f}")
-columns[3].metric(f"当前口径报告 ≥{HIGH_MATCH_THRESHOLD:g}", metrics["high_match_count"])
-st.caption(f"n={metrics['report_count']}：所选岗位、同一评分口径的人岗组合最新报告数。未生成报告者不进入均值；阈值是规则设置，不是能力达标线。不同岗位或能力模型的平均分不能直接排名比较。")
+columns[1].metric("匹配报告数", metrics["report_count"])
+columns[2].metric("平均匹配分", "暂无数据" if metrics["average_score"] is None else f"{metrics['average_score']:.2f}")
+columns[3].metric(f"高匹配报告数（≥{HIGH_MATCH_THRESHOLD:g} 分）", metrics["high_match_count"])
+st.caption(f"以上数据来自所选岗位、使用同一评分规则生成的 {metrics['report_count']} 份最新匹配报告。没有生成报告的候选人不计入平均分；{HIGH_MATCH_THRESHOLD:g} 分是系统筛选参考值，不代表最终录用标准。不同岗位的平均分不建议直接比较。")
 if metrics["orphan_report_count"]:
     st.warning(f"有 {metrics['orphan_report_count']} 条报告找不到当前岗位或候选人，已从统计中排除。")
 
@@ -66,9 +66,9 @@ with right:
     rows = [(labels.get(key, str(key)), metrics["report_count"]) for key in metrics["job_averages"]]
     if rows:
         job_chart = go.Figure(go.Bar(x=[row[1] for row in rows], y=[row[0] for row in rows], orientation="h", marker_color="#0066CC", text=[row[1] for row in rows], textposition="auto"))
-        job_chart.update_layout(title="当前口径样本量", xaxis_title="最新报告数 n", yaxis_title="岗位", template="plotly_white", height=380)
+        job_chart.update_layout(title="岗位匹配报告数量", xaxis_title="报告数量", yaxis_title="岗位", template="plotly_white", height=380)
     else:
-        job_chart = no_data_figure("当前口径样本量", "最新报告数 n")
+        job_chart = no_data_figure("岗位匹配报告数量", "报告数量")
     st.plotly_chart(job_chart, use_container_width=True, key="job_average")
 
 left, right = st.columns(2)
