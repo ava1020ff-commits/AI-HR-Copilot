@@ -53,7 +53,7 @@ def apply_saas_theme(section: str) -> None:
 
 def render_page_header(title: str, subtitle: str, *, action_path: str | None = None, action_label: str | None = None) -> None:
     """统一页面标题，并可在右侧放置一个主操作。"""
-    left, right = st.columns([4, 1])
+    left, right = st.columns([4, 1], vertical_alignment="center")
     with left:
         st.title(title)
         if subtitle:

@@ -75,8 +75,12 @@ hr { border-color: var(--hr-line); margin: 24px 0; }
 .st-key-page_primary_action [data-testid="stPageLink"] a,
 .st-key-empty_primary_action [data-testid="stPageLink"] a {
   background: var(--hr-accent); color: var(--hr-white) !important; border-radius: 8px;
-  padding: 8px 16px; justify-content: center; font-weight: 600;
+  min-height: 48px; height: auto; padding: 8px 16px; justify-content: center; align-items: center;
+  box-sizing: border-box; line-height: 1.5; font-weight: 600; overflow: visible;
 }
+.st-key-page_primary_action { padding: 8px 0; overflow: visible; }
+.st-key-page_primary_action [data-testid="stPageLink"] { min-height: 48px; overflow: visible; }
+.st-key-page_primary_action [data-testid="stPageLink"] a { width: 100%; white-space: normal; text-align: center; }
 .st-key-page_primary_action [data-testid="stPageLink"] a *,
 .st-key-empty_primary_action [data-testid="stPageLink"] a * { color: inherit !important; }
 .st-key-empty_state { text-align: center; padding: 32px !important; background: var(--hr-white); }
