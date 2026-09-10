@@ -7,6 +7,7 @@ import streamlit as st
 
 from database.matching_records import list_candidates, list_jobs
 from database.dashboard import save_match_report
+from database.activity import try_record_ai_usage
 from services.matching import MatchingError, build_rubric, calculate_match
 from services.ui import apply_saas_theme, mode_label, render_ai_intro, render_empty_state, render_page_header, render_section_title
 from services.match_explanation import render_dimension
@@ -62,6 +63,7 @@ if submitted:
     try:
         result = calculate_match(job["data"], candidate["data"], rubric)
         save_match_report(job_id, candidate_id, job["data"], candidate["data"], result)
+        try_record_ai_usage("resume_screening", job_id=job_id, candidate_id=candidate_id)
         st.session_state["match_result"] = result
     except (MatchingError, ValueError) as exc:
         st.error(str(exc))

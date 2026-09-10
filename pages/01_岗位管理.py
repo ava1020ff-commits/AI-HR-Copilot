@@ -5,6 +5,7 @@ import sqlite3
 import streamlit as st
 
 from database.jobs import save_job
+from database.activity import try_record_ai_usage
 from services.jd_parser import JDParseError, LLMConfig, MAX_JD_LENGTH, parse_jd, parse_jd_local
 from services.ui import apply_saas_theme, render_page_header, render_section_title, render_tags
 
@@ -43,6 +44,8 @@ if submitted:
                 result = parse_jd_local(jd, local_title) if use_local else parse_jd(jd, config=config, use_mock=use_mock)
                 mode = "local" if use_local else "mock" if use_mock else "llm"
                 job_id = save_job(jd, result, mode, work_location=work_location, salary_range=salary_range)
+                if mode == "llm":
+                    try_record_ai_usage("jd_optimization", job_id=job_id)
                 st.session_state["jd_result"] = {
                     "result": result, "mode": mode, "id": job_id,
                     "work_location": work_location, "salary_range": salary_range,

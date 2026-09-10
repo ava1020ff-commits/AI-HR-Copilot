@@ -6,6 +6,7 @@ import sqlite3
 import streamlit as st
 
 from database.candidates import save_candidate
+from database.activity import try_record_ai_usage
 from database.matching_records import list_candidates
 from services.candidate_search import filter_candidates
 from services.jd_parser import LLMConfig
@@ -49,6 +50,8 @@ if st.button("解析简历", type="primary", disabled=uploaded is None):
             with st.spinner("正在提取文字并解析……"):
                 text = extract_resume(uploaded.name, content)
                 result = parse_resume(text, use_local=use_local, config=config)
+                if not use_local:
+                    try_record_ai_usage("candidate_analysis")
                 st.session_state["resume_draft"] = {"result": result, "text": sanitize_text(text), "mode": "local" if use_local else "llm"}
         except ResumeError as exc:
             st.error(str(exc))

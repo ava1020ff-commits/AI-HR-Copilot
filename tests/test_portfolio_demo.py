@@ -18,17 +18,12 @@ def test_demo_records_are_independent() -> None:
     assert build_demo()[1]["skills"] == ["RAG"]
 
 
-def test_demo_explanation_renders(monkeypatch, tmp_path) -> None:
+def test_demo_explanation_is_not_rendered_on_workspace_home(monkeypatch, tmp_path) -> None:
     from pathlib import Path
     from streamlit.testing.v1 import AppTest
 
     monkeypatch.setenv("JD_DATABASE_PATH", str(tmp_path / "empty.sqlite3"))
     monkeypatch.setenv("RESUME_DATABASE_PATH", str(tmp_path / "empty.sqlite3"))
     app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py")).run()
-    app.button(key="portfolio_demo").click().run()
     assert not app.exception
-    text = "\n".join(item.value for item in app.text)
-    for label in ("岗位要求：", "权重：", "原文证据：", "证据类型：", "计分规则：", "待核实内容："):
-        assert label in text
-    assert "× 系数 0.5" in text and "× 系数 1" in text
-    assert any("规则可复现不等于已经证明评分有效" in item.value for item in app.caption)
+    assert not any(getattr(item, "key", None) == "portfolio_demo" for item in app.button)

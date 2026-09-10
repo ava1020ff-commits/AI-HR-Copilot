@@ -6,6 +6,7 @@ import sqlite3
 import streamlit as st
 
 from database.interview_records import read_jd
+from database.activity import try_record_ai_usage
 from database.matching_records import list_candidates, list_jobs
 from services.interview import CATEGORIES, InterviewError, generate_interview
 from services.matching import MatchingError, calculate_match
@@ -54,6 +55,7 @@ if st.button("✦ 生成面试方案", type="primary"):
     try:
         report = current_report if use_current else calculate_match(job["data"], candidate["data"])
         guide = generate_interview(job["data"], jd, candidate["data"], report)
+        try_record_ai_usage("interview_questions", job_id=job_id, candidate_id=candidate_id)
         st.session_state["interview_result"] = {"guide": guide, "report": report}
     except (MatchingError, InterviewError) as exc:
         st.error(str(exc))

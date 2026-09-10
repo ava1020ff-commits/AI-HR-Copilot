@@ -6,13 +6,19 @@ from pathlib import Path
 import streamlit as st
 
 NAVIGATION_GROUPS = (
-    ("首页", (("app.py", "▦  首页", "首页"),)),
+    ("概览", (("app.py", "▦  首页", "首页"),)),
     ("招聘管理", (
-        ("pages/07_已保存岗位.py", "▣  岗位", "已保存岗位"),
-        ("pages/02_候选人.py", "♙  候选人", "候选人"),
+        ("pages/07_已保存岗位.py", "▣  岗位管理", "已保存岗位"),
+        ("pages/02_候选人.py", "♙  候选人管理", "候选人"),
+        ("pages/06_候选人寻访.py", "⌕  人才库", "候选人寻访"),
+    )),
+    ("AI 招聘", (
+        ("pages/01_岗位管理.py", "✦  JD 智能优化", "JD 解析"),
         ("pages/03_智能匹配.py", "✦  智能匹配", "智能匹配"),
-        ("pages/04_面试助手.py", "◉  面试", "面试助手"),
-        ("pages/06_候选人寻访.py", "⌕  人才寻访", "候选人寻访"),
+        ("pages/08_BOSS沟通话术.py", "◌  BOSS沟通话术", "BOSS沟通话术"),
+        ("pages/04_面试助手.py", "◉  AI 面试", "面试助手"),
+    )),
+    ("数据分析", (
         ("pages/05_招聘分析.py", "▥  招聘分析", "招聘分析"),
     )),
     ("人力分析", (
@@ -20,7 +26,7 @@ NAVIGATION_GROUPS = (
         ("pages/12_人力成本.py", "▤  人力成本", "人力成本"),
     )),
 )
-MOBILE_NAVIGATION = tuple(item for _, group in NAVIGATION_GROUPS for item in group) + (("pages/01_岗位管理.py", "＋  创建岗位", "JD 解析"),)
+MOBILE_NAVIGATION = tuple(item for _, group in NAVIGATION_GROUPS for item in group)
 
 
 def mode_label(mode: str) -> str:
@@ -41,11 +47,10 @@ def apply_saas_theme(section: str) -> None:
             st.markdown("### FF 人力工作台")
             st.caption("People Workspace")
         for group_name, items in NAVIGATION_GROUPS:
-            if group_name != "首页":
-                st.caption(group_name)
+            st.caption(group_name)
             for path, label, section_name in items:
                 active = section_name == section or (section == "首页" and path == "app.py")
-                level = "subnav" if group_name != "首页" else "nav"
+                level = "nav" if group_name == "概览" else "subnav"
                 state = "active" if active else "item"
                 with st.container(key=f"{level}_{state}_{Path(path).stem}"):
                     st.page_link(path, label=label)

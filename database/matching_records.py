@@ -17,7 +17,12 @@ def _read(path: Path, table: str, label: str) -> list[dict]:
         if not exists:
             return []
         columns = {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
-        metadata = ", work_location, salary_range" if table == "jd_jobs" and {"work_location", "salary_range"} <= columns else ""
+        metadata_fields = []
+        if table == "jd_jobs":
+            metadata_fields.extend(name for name in ("work_location", "salary_range", "created_at") if name in columns)
+        elif table == "candidates" and "confirmed_at" in columns:
+            metadata_fields.append("confirmed_at")
+        metadata = "".join(f", {name}" for name in metadata_fields)
         rows = connection.execute(f"SELECT id, {label}, parsed_json, mode{metadata} FROM {table} ORDER BY id DESC").fetchall()
     result = []
     for row in rows:
@@ -29,11 +34,9 @@ def _read(path: Path, table: str, label: str) -> list[dict]:
         except (json.JSONDecodeError, ValueError, TypeError):
             raise ValueError("数据库存在无效 JSON 记录，请先检查已保存数据。") from None
         record = {"id": identifier, "label": name, "data": data, "mode": mode}
-        if len(row) == 6:
-            if row[4]:
-                record["work_location"] = row[4]
-            if row[5]:
-                record["salary_range"] = row[5]
+        for name, value in zip(metadata_fields, row[4:]):
+            if value:
+                record[name] = value
         result.append(record)
     return result
 
