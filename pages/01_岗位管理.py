@@ -4,6 +4,8 @@ import sqlite3
 
 import streamlit as st
 
+from services.ui import render_data_table
+
 from database.jobs import save_job
 from database.activity import try_record_ai_usage
 from services.jd_parser import JDParseError, LLMConfig, MAX_JD_LENGTH, parse_jd, parse_jd_local
@@ -78,7 +80,7 @@ if "jd_result" in st.session_state:
             render_tags(result[key])
     st.subheader("胜任力模型")
     if result["competency_model"]:
-        st.dataframe(
+        render_data_table(row_height=44, data=
             [{"维度": item["dimension"], "权重 (%)": item["weight"], "说明": item["description"]} for item in result["competency_model"]],
             hide_index=True,
             width="stretch",

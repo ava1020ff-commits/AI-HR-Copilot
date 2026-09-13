@@ -1,39 +1,26 @@
 """人力成本分析页面。"""
 
+import sqlite3
 import streamlit as st
 
+from services.ui import render_data_table
+
+from database.hr_base_data import load_base_data
 from services.human_cost import (
-    ACTIVE_COLUMNS,
-    DEPARTED_COLUMNS,
-    HC_COLUMNS,
     calculate_dashboard,
-    csv_template,
     dashboard_csv,
-    read_csv,
 )
 from services.ui import apply_saas_theme, render_page_header, render_section_title
 
 st.set_page_config(page_title="人力成本", page_icon="▤", layout="wide")
 apply_saas_theme("人力成本")
-render_page_header("人力成本", "")
+render_page_header("人力成本", "基于基础数据自动核算人力分布、离职、绩效与续签指标")
 
-st.info("上传数据只在当前会话中处理，不写入招聘数据库。在职名单需包含 M/P/S/O 序列，HC 表需填写总 HC 和各序列 HC。请使用脱敏数据，并在发布报表前由 HR 复核。")
-render_section_title("准备数据")
-data_columns = st.columns(3)
-data_sources = (
-    ("在职人员", "人员、序列、合同与近期绩效", ACTIVE_COLUMNS, "active-employees.csv", "active_people"),
-    ("离职人员", "本期离职人员及离职类型", DEPARTED_COLUMNS, "departed-employees.csv", "departed_people"),
-    ("HC", "部门、属地及 M/P/S/O 计划人数", HC_COLUMNS, "headcount.csv", "hc_data"),
-)
-uploaded_files = []
-for column, (title, description, fields, filename, key) in zip(data_columns, data_sources):
-    with column:
-        with st.container(border=True, key=f"data_card_{key}"):
-            st.markdown(f"### {title}")
-            st.caption(description)
-            st.download_button("下载模板", csv_template(fields), filename, "text/csv", use_container_width=True, key=f"template_{key}")
-            uploaded_files.append(st.file_uploader(f"上传{title}", type=["csv"], key=key, label_visibility="collapsed"))
-active_file, departed_file, hc_file = uploaded_files
+try:
+    base_data = load_base_data()
+except (sqlite3.Error, OSError, ValueError):
+    st.error("基础数据暂时无法读取，请到基础数据页面重新上传。")
+    st.stop()
 
 with st.expander("核算设置", expanded=False):
     settings = st.columns(3)
@@ -45,14 +32,14 @@ with st.expander("核算设置", expanded=False):
         pip_threshold = st.number_input("低绩效阈值", min_value=0.0, max_value=5.0, value=2.0, step=0.1)
 
 dashboard = []
-if active_file and departed_file and hc_file:
+if base_data["updated_at"]:
     try:
-        active_rows = read_csv(active_file.getvalue(), ACTIVE_COLUMNS)
-        departed_rows = read_csv(departed_file.getvalue(), DEPARTED_COLUMNS)
-        hc_rows = read_csv(hc_file.getvalue(), HC_COLUMNS)
-        dashboard = calculate_dashboard(active_rows, departed_rows, hc_rows, as_of=as_of, reminder_days=int(reminder_days), pip_threshold=float(pip_threshold))
-    except (UnicodeDecodeError, ValueError) as exc:
+        dashboard = calculate_dashboard(base_data["active"], base_data["departed"], base_data["hc"], as_of=as_of, reminder_days=int(reminder_days), pip_threshold=float(pip_threshold))
+    except ValueError as exc:
         st.error(f"数据无法核算：{exc}")
+else:
+    st.info("尚未上传基础数据。")
+    st.page_link("pages/10_基础数据.py", label="前往基础数据 →")
 
 render_section_title("核算结果")
 metrics = st.columns(4)
@@ -63,10 +50,10 @@ metrics[3].metric("二次续签人数", sum(int(row["60天内二次续签"]) for
 
 if dashboard:
     render_section_title("人力分布看板", "按二级部门和属地汇总")
-    st.dataframe(dashboard, hide_index=True, width="stretch")
+    render_data_table(row_height=44, data=dashboard, hide_index=True, width="stretch")
     st.download_button("导出人力分布看板", dashboard_csv(dashboard), "human-cost-dashboard.csv", "text/csv", type="primary")
 else:
-    st.caption("上传三份数据后，这里将显示人力分布看板。")
+    st.caption("基础数据准备完成后，这里将自动显示人力分布看板。")
 
 workflow = (
     ("1", "更新员工花名册", "导入最新人员信息，确认部门、岗位、在职与离职状态。"),
@@ -83,7 +70,7 @@ with st.expander("查看计算流程与规则", expanded=False):
 
 with st.expander("查看指标说明", expanded=False):
     st.caption("每项指标都要明确统计周期、人员范围和计算规则")
-    st.dataframe(
+    render_data_table(row_height=44, data=
         [
             {"指标": "主动离职率", "普通解释": "统计期内主动离职人数占平均在职人数的比例", "当前状态": "待接入"},
             {"指标": "PIP 绩效预警", "普通解释": "满足已确认绩效规则、需要 HR 复核的人数", "当前状态": "待接入"},

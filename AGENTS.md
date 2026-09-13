@@ -31,3 +31,7 @@ There is no commit history from which to infer a convention. Use short, imperati
 ## Security & Configuration
 
 Never commit credentials, local environment files, or real employee or candidate records. Use synthetic test fixtures and document required configuration with placeholder values. Add suitable ignore rules when introducing tooling or generated artifacts.
+
+## Design System (required for all pages)
+
+Read `DESIGN_SYSTEM.md` before UI work. `services/design_tokens.css` is the single source of visual tokens. Every page must call `apply_saas_theme`; reuse `services/ui.py` and `services/workspace_ui.py` components. Do not introduce page-local CSS, hardcoded colors, decorative emoji, shadows, or a separate visual language. Plotly and iframe components must consume `services/design_system.py`. Update shared tokens/components and the design guide for extensions; keep native Streamlit theme values synchronized. Preserve business behavior and run the design contract tests plus relevant page tests.

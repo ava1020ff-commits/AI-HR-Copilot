@@ -6,7 +6,7 @@ import streamlit as st
 
 from database.jobs import list_saved_jobs, update_job
 from services.jd_parser import JDParseError, LLMConfig, MAX_JD_LENGTH, parse_jd, parse_jd_local
-from services.ui import apply_saas_theme, mode_label, render_empty_state, render_page_header, render_section_title, render_tags
+from services.ui import apply_saas_theme, mode_label, render_empty_state, render_page_header, render_section_title, render_tags, render_data_table, render_status
 
 st.set_page_config(page_title="岗位管理", page_icon="🗂️", layout="wide")
 apply_saas_theme("已保存岗位")
@@ -15,14 +15,24 @@ render_page_header("岗位管理", "管理岗位信息、JD 与招聘进度", ac
 try:
     jobs = list_saved_jobs()
 except (sqlite3.Error, OSError, ValueError):
-    jobs = []
-    st.error("暂时无法读取已保存岗位。")
+    st.error("暂时无法读取已保存岗位，请稍后重试。")
+    st.stop()
 
 if not jobs:
     render_empty_state("▣", "暂无已保存岗位", "创建并保存岗位后，可在这里查看和维护岗位信息。", action_path="pages/01_岗位管理.py", action_label="＋ 创建岗位")
     st.stop()
 
 render_section_title("岗位列表", f"共 {len(jobs)} 个岗位")
+query = st.text_input("搜索岗位", placeholder="岗位名称、地点或技能", key="job_query").strip().lower()
+filtered = [item for item in jobs if not query or query in " ".join([
+    item["job_title"], item["work_location"], *item["result"].get("hard_skills", [])]).lower()]
+st.caption(f"显示 {len(filtered)} / {len(jobs)} 个岗位")
+if not filtered:
+    st.info("没有符合条件的岗位，请调整关键词。")
+    st.stop()
+render_data_table([{"岗位": item["job_title"], "地点": item["work_location"] or "未填写",
+                   "薪资范围": item["salary_range"] or "未填写", "记录状态": "已保存"} for item in filtered])
+jobs = filtered
 selected_id = st.selectbox("选择岗位", [item["id"] for item in jobs], format_func=lambda value: next(item["job_title"] for item in jobs if item["id"] == value))
 selected = next(item for item in jobs if item["id"] == selected_id)
 result = selected["result"]
@@ -30,13 +40,11 @@ result = selected["result"]
 with st.container(border=True, key=f"job_detail_{selected_id}"):
     title_columns = st.columns([4, 1])
     title_columns[0].markdown(f"## {selected['job_title']}")
-    title_columns[1].caption("招聘中")
+    with title_columns[1]:
+        render_status("已保存")
     metadata = " · ".join(item for item in (selected["work_location"], selected["salary_range"], result.get("education"), result.get("experience")) if item)
     st.caption(metadata or "岗位信息待补充")
-    summary = st.columns(3)
-    summary[0].metric("能力维度", len(result.get("competency_model", [])))
-    summary[1].metric("硬技能", len(result.get("hard_skills", [])))
-    summary[2].metric("加分技能", len(result.get("bonus_skills", [])))
+    st.caption(f"{len(result.get('competency_model', []))} 项能力维度 · {len(result.get('hard_skills', []))} 项硬技能 · {len(result.get('bonus_skills', []))} 项加分技能")
     st.markdown("### 核心能力")
     render_tags(result.get("hard_skills", []) + result.get("soft_skills", []))
     with st.expander("查看岗位职责与完整 JD"):

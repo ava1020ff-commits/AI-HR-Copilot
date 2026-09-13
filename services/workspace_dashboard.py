@@ -1,6 +1,6 @@
 """根据现有招聘记录计算首页指标、任务、日程与预警。"""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 SAVED_MINUTES = {"resume_screening": 3, "boss_message": 5, "interview_questions": 10, "candidate_analysis": 8, "jd_optimization": 10}
 
@@ -66,4 +66,60 @@ def calculate_workspace_dashboard(jobs: list[dict], candidates: list[dict], anal
         ),
         "ai_usage": (("AI 筛选简历", f"{counts['resume_screening']} 份"), ("生成候选人沟通话术", f"{counts['boss_message']} 次"), ("生成面试题", f"{counts['interview_questions']} 份"), ("完成候选人分析", f"{counts['candidate_analysis']} 人"), ("预计节省招聘时间", f"{saved_minutes / 60:.1f} 小时")),
         "tasks": tuple(tasks), "schedule": (), "alerts": tuple(alerts), "active_jobs": len(jobs),
+    }
+
+
+# Fixed business timezone avoids Windows zoneinfo/tzdata installation differences.
+WORKSPACE_TIMEZONE = timezone(timedelta(hours=8))
+
+
+def calculate_recruitment_overview(jobs: list[dict], candidates: list[dict], analytics: dict, *, selected_job: int | None = None, now: datetime | None = None) -> dict:
+    """Current snapshot; count people once and keep missing scheduling explicit."""
+    now = (now or datetime.now(WORKSPACE_TIMEZONE)).astimezone(WORKSPACE_TIMEZONE)
+    scoped_jobs = [item for item in jobs if selected_job is None or item["id"] == selected_job]
+    job_names = {item["id"]: item["label"] for item in scoped_jobs}
+    candidate_names = {item["id"]: item["label"] for item in candidates}
+    reports = {(item["job_id"], item["candidate_id"]): item for item in analytics.get("reports", [])
+               if item["job_id"] in job_names and item["candidate_id"] in candidate_names}
+    stages = {(item["job_id"], item["candidate_id"]): item for item in analytics.get("stages", [])
+              if item["job_id"] in job_names and item["candidate_id"] in candidate_names}
+    related_ids = {pair[1] for pair in reports.keys() | stages.keys()}
+    scoped_candidates = [item for item in candidates if selected_job is None or item["id"] in related_ids]
+    screened_ids = {pair[1] for pair in reports}
+    # A manually advanced candidate is not also a new unprocessed resume.
+    unscreened = [item for item in scoped_candidates if item["id"] not in screened_ids | {pair[1] for pair in stages}]
+    contact = [item for item in stages.values() if item["stage"] == "HR人工确认"]
+    interview = [item for item in stages.values() if item["stage"] == "进入面试"]
+    offers = [item for item in stages.values() if item["stage"] == "Offer"]
+    pending_ids = {item["id"] for item in unscreened} | {item["candidate_id"] for item in contact + interview + offers}
+    today_count = sum(
+        created is not None and created.astimezone(WORKSPACE_TIMEZONE).date() == now.date()
+        for created in (_time(item.get("confirmed_at")) for item in scoped_candidates)
+    )
+
+    def rows(items: list[dict], next_step: str) -> tuple[dict, ...]:
+        return tuple({"候选人": candidate_names[item["candidate_id"]], "岗位": job_names[item["job_id"]], "下一步": next_step} for item in items)
+
+    progress = tuple({
+        "岗位": item["label"],
+        "关联候选人": len({pair[1] for pair in reports.keys() | stages.keys() if pair[0] == item["id"]}),
+        "匹配报告": sum(pair[0] == item["id"] for pair in reports),
+        "待跟进": sum(row["job_id"] == item["id"] for row in contact),
+        "面试中": sum(row["job_id"] == item["id"] for row in interview),
+        "Offer中": sum(row["job_id"] == item["id"] for row in offers),
+    } for item in scoped_jobs)
+    return {
+        "metrics": (
+            {"label": "待处理候选人", "value": len(pending_ids), "detail": "未筛选及跟进 / 面试 / Offer阶段，按人去重", "tone": "blue"},
+            {"label": "今日新增", "value": today_count, "detail": "今日确认保存的候选人 · 北京时间", "tone": "orange"},
+            {"label": "面试中", "value": len({item["candidate_id"] for item in interview}), "detail": "当前进入面试阶段的人数", "tone": "purple"},
+            {"label": "Offer中", "value": len({item["candidate_id"] for item in offers}), "detail": "当前Offer阶段人数，非已入职人数", "tone": "red"},
+        ),
+        "actions": (
+            {"key": "screen", "label": "待筛选简历", "value": len(unscreened), "detail": "尚无匹配报告或招聘阶段的简历", "path": "pages/03_智能匹配.py", "action": "去筛选", "rows": tuple({"候选人": item["label"], "岗位": "待选择岗位", "下一步": "完成人岗匹配"} for item in unscreened)},
+            {"key": "schedule", "label": "待安排面试", "value": 0, "detail": "尚未接入面试排期，暂无法统计待安排数量", "path": "pages/04_面试助手.py", "action": "面试准备", "rows": (), "available": False},
+            {"key": "contact", "label": "待跟进候选人", "value": len(contact), "detail": "HR已确认的人岗组合，实际沟通状态待核实", "path": "pages/08_BOSS沟通话术.py", "action": "去跟进", "rows": rows(contact, "确认沟通进展")},
+            {"key": "offer", "label": "待处理 Offer", "value": len(offers), "detail": "当前Offer人岗组合，处理结果需人工确认", "path": "pages/05_招聘分析.py", "action": "查看 Offer", "rows": rows(offers, "确认Offer反馈")},
+        ),
+        "job_progress": progress,
     }

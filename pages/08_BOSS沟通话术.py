@@ -6,6 +6,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from database.activity import try_record_ai_usage
+from services.design_system import COPY_BUTTON_CSS
 from services.boss_messaging import BossMessageError, generate_boss_message
 from services.jd_parser import LLMConfig, MAX_JD_LENGTH
 from services.ui import apply_saas_theme, render_page_header, render_section_title
@@ -16,11 +17,7 @@ def render_copy_button(text: str, label: str, key: str) -> None:
     payload = json.dumps(text, ensure_ascii=False).replace("</", "<\\/")
     components.html(
         f"""<button id="copy-{key}" type="button">{label}</button><span id="status-{key}" aria-live="polite"></span>
-<style>
-body {{ margin: 0; font-family: sans-serif; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }}
-button {{ min-height: 44px; padding: 8px 16px; border: 1px solid #dfe3ea; border-radius: 8px; background: #fff; color: #2563eb; cursor: pointer; font-size: 14px; }}
-button:hover {{ background: #eff6ff; }} span {{ color: #667085; font-size: 12px; white-space: nowrap; }}
-</style>
+<style>{COPY_BUTTON_CSS}</style>
 <script>
 const value = {payload};
 const button = document.getElementById('copy-{key}');
@@ -41,7 +38,7 @@ button.addEventListener('click', async () => {{
 def render_result_card(icon: str, title: str, text: str, key: str, *, complete: bool = False) -> None:
     with st.container(border=True, key=f"boss_result_{key}"):
         heading, action = st.columns([4, 1], vertical_alignment="center")
-        heading.markdown(f"### {icon} {title}")
+        heading.markdown(f"### {title}")
         with action:
             render_copy_button(text, "一键复制完整话术" if complete else "复制", key)
         st.write(text)

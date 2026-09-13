@@ -7,6 +7,7 @@ import streamlit as st
 
 from database.dashboard import STAGES, read_analytics, set_stage
 from database.matching_records import list_candidates, list_jobs
+from services.design_system import apply_chart_theme, token
 from services.dashboard import HIGH_MATCH_THRESHOLD, dashboard_metrics, scoring_scope
 from services.ui import apply_saas_theme, render_empty_state, render_page_header, render_section_title
 
@@ -36,7 +37,7 @@ except (sqlite3.Error, OSError, ValueError):
 columns = st.columns(4)
 columns[0].metric("已确认保存候选人（全库）", metrics["candidate_count"])
 columns[1].metric("匹配报告数", metrics["report_count"])
-columns[2].metric("平均匹配分", "暂无数据" if metrics["average_score"] is None else f"{metrics['average_score']:.2f}")
+columns[2].metric("平均匹配分", "0" if metrics["average_score"] is None else f"{metrics['average_score']:.2f}")
 columns[3].metric(f"高匹配报告数（≥{HIGH_MATCH_THRESHOLD:g} 分）", metrics["high_match_count"])
 st.caption(f"以上数据来自所选岗位、使用同一评分规则生成的 {metrics['report_count']} 份最新匹配报告。没有生成报告的候选人不计入平均分；{HIGH_MATCH_THRESHOLD:g} 分是系统筛选参考值，不代表最终录用标准。不同岗位的平均分不建议直接比较。")
 if metrics["orphan_report_count"]:
@@ -56,34 +57,34 @@ render_section_title("人才质量洞察")
 left, right = st.columns(2)
 with left:
     if metrics["scores"]:
-        distribution = go.Figure(go.Histogram(x=metrics["scores"], xbins={"start": 0, "end": 100, "size": 10}, marker_color="#0066CC"))
+        distribution = go.Figure(go.Histogram(x=metrics["scores"], xbins={"start": 0, "end": 100, "size": 10}, marker_color=token("accent")))
         distribution.update_layout(title="候选人匹配分分布", xaxis_title="匹配分", yaxis_title="人岗组合数", bargap=0.08, template="plotly_white", height=380)
     else:
         distribution = no_data_figure("候选人匹配分分布", "匹配分")
-    st.plotly_chart(distribution, use_container_width=True, key="score_distribution")
+    st.plotly_chart(apply_chart_theme(distribution), use_container_width=True, key="score_distribution")
 with right:
     labels = {item["id"]: item["label"] for item in jobs}
     rows = [(labels.get(key, str(key)), metrics["report_count"]) for key in metrics["job_averages"]]
     if rows:
-        job_chart = go.Figure(go.Bar(x=[row[1] for row in rows], y=[row[0] for row in rows], orientation="h", marker_color="#0066CC", text=[row[1] for row in rows], textposition="auto"))
+        job_chart = go.Figure(go.Bar(x=[row[1] for row in rows], y=[row[0] for row in rows], orientation="h", marker_color=token("accent"), text=[row[1] for row in rows], textposition="auto"))
         job_chart.update_layout(title="岗位匹配报告数量", xaxis_title="报告数量", yaxis_title="岗位", template="plotly_white", height=380)
     else:
         job_chart = no_data_figure("岗位匹配报告数量", "报告数量")
-    st.plotly_chart(job_chart, use_container_width=True, key="job_average")
+    st.plotly_chart(apply_chart_theme(job_chart), use_container_width=True, key="job_average")
 
 left, right = st.columns(2)
 with left:
     dimensions = sorted(metrics["dimension_averages"].items(), key=lambda row: row[1])
     if dimensions:
-        dimension_chart = go.Figure(go.Bar(x=[row[1] for row in dimensions], y=[row[0] for row in dimensions], orientation="h", marker_color="#0066CC", text=[row[1] for row in dimensions], textposition="auto"))
+        dimension_chart = go.Figure(go.Bar(x=[row[1] for row in dimensions], y=[row[0] for row in dimensions], orientation="h", marker_color=token("accent"), text=[row[1] for row in dimensions], textposition="auto"))
         dimension_chart.update_layout(title="能力维度平均得分率", xaxis_title="平均得分率（%）", yaxis_title="能力维度", xaxis_range=[0, 100], template="plotly_white", height=380)
     else:
         dimension_chart = no_data_figure("能力维度平均得分率", "平均得分率（%）")
-    st.plotly_chart(dimension_chart, use_container_width=True, key="dimension_average")
+    st.plotly_chart(apply_chart_theme(dimension_chart), use_container_width=True, key="dimension_average")
 with right:
-    funnel = go.Figure(go.Bar(y=list(metrics["funnel"]), x=list(metrics["funnel"].values()), orientation="h", marker_color="#0066CC"))
+    funnel = go.Figure(go.Bar(y=list(metrics["funnel"]), x=list(metrics["funnel"].values()), orientation="h", marker_color=token("accent")))
     funnel.update_layout(title="记录数量（非转化漏斗）", template="plotly_white", height=380)
-    st.plotly_chart(funnel, use_container_width=True, key="recruitment_funnel")
+    st.plotly_chart(apply_chart_theme(funnel), use_container_width=True, key="recruitment_funnel")
 
 st.subheader("人工记录招聘阶段")
 st.caption("首项是全库已确认保存的候选人，不是岗位投递人数；其余统计限定当前岗位和评分口径。后三阶段按人工记录阶段累计计数，不代表逐步转化率。记录 Offer 不会创建或发送 Offer。下方登记表可管理所有岗位组合。")

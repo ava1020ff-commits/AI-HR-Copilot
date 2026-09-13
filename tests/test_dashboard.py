@@ -127,7 +127,7 @@ def test_page_empty_shows_no_meaningless_charts() -> None:
     assert not app.exception and len(app.metric) == 4
     assert len(app.get("plotly_chart")) == 0
     assert any("暂无招聘分析数据" in item.value for item in app.markdown)
-    assert app.metric[2].value == "暂无数据"
+    assert [item.value for item in app.metric] == ["0", "0", "0", "0"]
 
 
 def test_page_data_and_manual_confirmation() -> None:
@@ -157,3 +157,56 @@ def test_navigation() -> None:
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run()
     app.switch_page("pages/05_招聘分析.py").run()
     assert not app.exception and app.title[0].value == "招聘分析"
+
+
+def test_homepage_metrics_follow_database_changes() -> None:
+    from database.activity import record_ai_usage
+
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run()
+
+    def values() -> list[str]:
+        return [item.value for item in app.markdown if item.value.startswith("## ")]
+
+    assert not app.exception
+    assert values() == ["## 0"] * 4
+    assert [item.value for item in app.subheader] == ["需要我处理", "招聘进展", "AI 助手"]
+
+    job_id, candidate_id, *_ = seed()
+    save_candidate(candidate("新增合成候选人"), "local", confirmed=True)
+    set_stage(job_id, candidate_id, "HR人工确认")
+    record_ai_usage("boss_message", job_id=job_id, candidate_id=candidate_id)
+    app.run()
+    assert not app.exception
+    assert values() == ["## 2", "## 2", "## 0", "## 0"]
+
+    set_stage(job_id, candidate_id, "进入面试")
+    app.run()
+    assert not app.exception
+    assert values() == ["## 2", "## 2", "## 1", "## 0"]
+
+    # Clearing the isolated test database must reset values on the same page rerun.
+    from database.jobs import get_db_path
+    with sqlite3.connect(get_db_path()) as connection:
+        for table in ("jd_jobs", "candidates", "match_reports", "application_stages", "ai_usage_log"):
+            connection.execute(f"DELETE FROM {table}")
+    app.run()
+    assert not app.exception
+    assert values() == ["## 0"] * 4
+    assert any("暂无岗位进展" in item.value for item in app.markdown)
+
+
+def test_homepage_job_filter_updates_all_sections() -> None:
+    job_id, candidate_id, *_ = seed()
+    save_candidate(candidate("未关联候选人"), "local", confirmed=True)
+    set_stage(job_id, candidate_id, "Offer")
+    app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run()
+    assert not app.exception
+    assert [item.value for item in app.markdown if item.value.startswith("## ")] == ["## 2", "## 2", "## 0", "## 1"]
+    app.selectbox(key="workspace_job").select(job_id).run()
+    assert not app.exception
+    assert [item.value for item in app.markdown if item.value.startswith("## ")] == ["## 1", "## 1", "## 0", "## 1"]
+    assert any("未关联简历不归入该岗位" in item.value for item in app.caption)
+    assert app.dataframe[-1].value.iloc[0]["Offer中"] == 1
+    app.selectbox(key="workspace_job").select("all").run()
+    assert not app.exception
+    assert [item.value for item in app.markdown if item.value.startswith("## ")][0] == "## 2"

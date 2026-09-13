@@ -242,7 +242,7 @@ def test_page_loads_saved_job_for_editing(tmp_path) -> None:
     app = AppTest.from_file(str(PAGE.parents[1] / "app.py"), default_timeout=15).run().switch_page("pages/" + saved_page.name).run()
     assert not app.exception
     assert app.text_area[0].value == JD
-    assert app.text_input[0].value == MOCK_JOB["job_title"]
+    assert app.text_input(key="edit_title_1").value == MOCK_JOB["job_title"]
     assert any(button.label == "重新解析并更新" for button in app.button)
 
 

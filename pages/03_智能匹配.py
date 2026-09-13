@@ -5,6 +5,8 @@ import sqlite3
 
 import streamlit as st
 
+from services.ui import render_data_table
+
 from database.matching_records import list_candidates, list_jobs
 from database.dashboard import save_match_report
 from database.activity import try_record_ai_usage
@@ -85,7 +87,7 @@ if "match_result" in st.session_state:
             st.write(f"当前证据覆盖率为 {result['evidence_coverage']}%。")
             st.caption(result["notice"])
     render_section_title("维度匹配")
-    st.dataframe([
+    render_data_table(row_height=44, data=[
         {"维度": item["dimension"], "得分": item["score"], "满分": item["max_score"],
          "证据条数": len(item["evidence_sources"])}
         for item in result["dimensions"]

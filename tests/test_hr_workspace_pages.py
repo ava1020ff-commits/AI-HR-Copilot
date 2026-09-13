@@ -29,3 +29,17 @@ def test_people_cost_page_renders() -> None:
     assert any(item.label == "核算设置" for item in app.expander)
     assert any(item.label == "查看计算流程与规则" for item in app.expander)
     assert any(item.label == "查看指标说明" for item in app.expander)
+    assert len(app.get("file_uploader")) == 0
+    assert any(item.label == "前往基础数据 →" for item in app.get("page_link"))
+
+
+def test_base_data_page_renders() -> None:
+    root = Path(__file__).resolve().parents[1]
+    app = AppTest.from_file(str(root / "app.py")).run(timeout=15)
+    app.switch_page("pages/10_基础数据.py").run(timeout=15)
+
+    assert not app.exception
+    assert app.title[0].value == "基础数据"
+    assert len(app.get("file_uploader")) == 3
+    assert len(app.get("download_button")) == 3
+    assert app.button[-1].label == "保存并更新分析"

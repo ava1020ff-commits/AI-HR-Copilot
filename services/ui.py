@@ -2,8 +2,11 @@
 
 from html import escape
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
+
+from services.design_system import TOKEN_CSS, token
 
 NAVIGATION_GROUPS = (
     ("概览", (("app.py", "▦  首页", "首页"),)),
@@ -22,6 +25,7 @@ NAVIGATION_GROUPS = (
         ("pages/05_招聘分析.py", "▥  招聘分析", "招聘分析"),
     )),
     ("人力分析", (
+        ("pages/10_基础数据.py", "▦  基础数据", "基础数据"),
         ("pages/11_人员异动.py", "↔  人员异动", "人员异动"),
         ("pages/12_人力成本.py", "▤  人力成本", "人力成本"),
     )),
@@ -36,7 +40,7 @@ def mode_label(mode: str) -> str:
 
 def apply_saas_theme(section: str) -> None:
     """应用企业招聘 SaaS 视觉和分组导航，不修改业务状态。"""
-    st.html(Path(__file__).with_name("theme.css"))
+    st.html("<style>" + TOKEN_CSS + Path(__file__).with_name("theme.css").read_text(encoding="utf-8") + "</style>")
     with st.container(key="mobile_menu"):
         with st.popover("菜单", use_container_width=True):
             st.caption(f"当前位置：{section}")
@@ -58,6 +62,11 @@ def apply_saas_theme(section: str) -> None:
 
 def render_page_header(title: str, subtitle: str, *, action_path: str | None = None, action_label: str | None = None) -> None:
     """统一页面标题，并可在右侧放置一个主操作。"""
+    if not (action_path and action_label):
+        st.title(title)
+        if subtitle:
+            st.caption(subtitle)
+        return
     left, right = st.columns([4, 1], vertical_alignment="center")
     with left:
         st.title(title)
@@ -99,3 +108,18 @@ def render_ai_intro(title: str, description: str) -> None:
     with st.container(border=True, key="ai_intro"):
         st.markdown(f"### ✦ {escape(title)}")
         st.caption(description)
+
+
+def render_data_table(data: Any, **kwargs: Any) -> Any:
+    """Use the native table with shared density; preserve caller column settings."""
+    kwargs.setdefault("row_height", int(token("table-row-height").removesuffix("px")))
+    kwargs.setdefault("hide_index", True)
+    kwargs.setdefault("width", "stretch")
+    return st.dataframe(data, **kwargs)
+
+
+def render_status(label: str, tone: str = "neutral") -> None:
+    """Semantic text remains readable without color; escape all supplied labels."""
+    if tone not in {"neutral", "info", "success", "warning", "danger"}:
+        raise ValueError("未知状态样式")
+    st.markdown(f"<span class='hr-status hr-status-{tone}'>{escape(label)}</span>", unsafe_allow_html=True)
