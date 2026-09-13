@@ -270,3 +270,62 @@ input:disabled, textarea:disabled { background: var(--hr-pearl); color: var(--hr
 @media (max-width: 360px) {
   .st-key-workspace_metrics [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex-basis: 100% !important; }
 }
+
+/* Responsive containment: shrink the layout, never scale or clip business content. */
+.stApp :is([data-testid="stMain"],
+  [data-testid="stVerticalBlock"], [data-testid="stColumn"], [data-testid="stElementContainer"]) {
+  min-width: 0; max-width: 100%; box-sizing: border-box;
+}
+.stApp :is([data-testid="stMarkdownContainer"], [data-testid="stCaptionContainer"],
+  [data-testid="stAlert"], .hm-tag, .hr-status) { overflow-wrap: anywhere; }
+.hm-tag, .hr-status { max-width: 100%; white-space: normal; }
+.hr-status::before { flex-shrink: 0; }
+.stApp :is([data-testid="stTextInput"], [data-testid="stTextArea"],
+  [data-testid="stSelectbox"], [data-testid="stMultiSelect"], [data-baseweb="select"]) {
+  min-width: 0; max-width: 100%;
+}
+.stApp :is(input, textarea) { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.stApp :is(.stButton, [data-testid="stDownloadButton"], [data-testid="stFormSubmitButton"],
+  [data-testid="stPageLink"]) :is(button, a) {
+  max-width: 100%; height: auto; white-space: normal; overflow-wrap: anywhere;
+}
+.stApp :is([data-testid="stDataFrame"], [data-testid="stTable"], [data-testid="stPlotlyChart"]) {
+  width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
+}
+.stApp :is([data-testid="stDataFrame"], [data-testid="stTable"]) { overflow-x: auto; }
+[data-testid="stTabs"] [role="tablist"] { max-width: 100%; overflow-x: auto; }
+[data-testid="stTabs"] [role="tab"] { flex-shrink: 0; }
+[data-testid="stRadio"] [role="radiogroup"] { flex-wrap: wrap; max-width: 100%; }
+[role="dialog"] { box-sizing: border-box; max-width: calc(100vw - var(--hr-space-8)); }
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .block-container { padding-inline: var(--hr-gutter-tablet); }
+  [data-testid="stHorizontalBlock"] { flex-wrap: wrap; gap: var(--hr-space-4); }
+  [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { min-width: 0 !important; }
+}
+@media (min-width: 768px) and (max-width: 991px) {
+  [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 calc(50% - var(--hr-space-4)) !important; }
+}
+@media (max-width: 991px) {
+  /* The existing complete menu replaces the persistent sidebar; no links are removed. */
+  [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none !important; }
+  .st-key-mobile_menu { display: block; }
+}
+@media (max-width: 767px) {
+  .block-container { padding-inline: var(--hr-gutter-mobile); padding-top: calc(var(--hr-space-12) + var(--hr-space-6)); }
+  [data-testid="stHorizontalBlock"] { flex-wrap: wrap; gap: var(--hr-space-4); }
+  .stApp [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex: 1 1 100% !important; min-width: 0 !important; }
+  h1 { font-size: var(--hr-text-title-mobile) !important; }
+  [data-testid="stVerticalBlockBorderWrapper"], [data-testid="stVerticalBlock"][style*="border: 1px"],
+  [class*="st-key-empty_state_"] { padding: var(--hr-card-padding-compact) !important; }
+  [data-testid="stFileUploaderDropzone"] { flex-wrap: wrap; padding: var(--hr-space-4); }
+}
+@media (max-width: 479px) {
+  .block-container { padding-inline: var(--hr-space-3); }
+  [data-testid="stHorizontalBlock"] { gap: var(--hr-space-3); }
+  .stApp :is(.stButton, [data-testid="stDownloadButton"], [data-testid="stFormSubmitButton"]) button {
+    padding-inline: var(--hr-space-3); min-height: var(--hr-control-height);
+  }
+}
+
+.stApp [data-testid="stMainBlockContainer"] { min-width: 0; max-width: min(100%, var(--hr-content-max)); box-sizing: border-box; }
