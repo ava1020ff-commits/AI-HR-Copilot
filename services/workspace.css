@@ -47,6 +47,19 @@
   background: var(--hr-hover); padding: var(--hr-space-3) var(--hr-card-padding);
   border-radius: var(--hr-radius) var(--hr-radius) 0 0;
 }
+/* Caption-based header: center the line boxes without changing column widths. */
+.st-key-recruitment_home .st-key-workspace_action_head [data-testid="stHorizontalBlock"] {
+  align-items: center;
+}
+.st-key-recruitment_home .st-key-workspace_action_head [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+  justify-content: center;
+}
+.st-key-recruitment_home .st-key-workspace_action_head [data-testid="stCaptionContainer"] {
+  display: flex; align-items: center; min-height: var(--hr-space-6); margin: 0;
+}
+.st-key-recruitment_home .st-key-workspace_action_head [data-testid="stCaptionContainer"] p {
+  margin: 0; line-height: var(--hr-line-body);
+}
 .st-key-recruitment_home [class*="st-key-workspace_action_row_"] {
   padding: var(--hr-space-3) var(--hr-card-padding);
   border-top: 1px solid var(--hr-line); border-radius: 0;
@@ -123,4 +136,35 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .st-key-recruitment_home * { transition: none !important; }
+}
+
+/* Standalone definitions: each item owns its vertical space. */
+.st-key-recruitment_home .metrics-definition {
+  padding: var(--hr-space-4);
+  font-size: var(--hr-text-sm); color: var(--hr-muted);
+  height: auto !important; max-height: none !important; overflow: visible !important;
+  overflow-wrap: anywhere; white-space: normal;
+}
+.st-key-recruitment_home .metrics-definition .metrics-definition-summary {
+  display: block !important; position: static !important;
+  margin: 0 0 calc(var(--hr-space-3) + var(--hr-space-1) / 2) !important; padding: 0;
+  font-size: inherit; line-height: 1.7 !important;
+  height: auto !important; min-height: 0 !important; max-height: none !important;
+  overflow: visible !important;
+}
+.st-key-recruitment_home .metrics-definition .metrics-definition-items {
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: 0; height: auto !important; max-height: none !important; overflow: visible !important;
+}
+.st-key-recruitment_home .metrics-definition .metrics-definition-item {
+  display: block !important; position: static !important; flex: 0 0 auto;
+  margin: 0 !important; padding: calc(var(--hr-space-3) / 2) 0 !important;
+  line-height: 1.7 !important; height: auto !important; min-height: 0 !important;
+  max-height: none !important; overflow: visible !important; white-space: normal !important;
+}
+.st-key-recruitment_home .metrics-definition :is(.metrics-definition-label, .metrics-definition-text) {
+  display: inline; line-height: inherit !important;
+}
+.st-key-recruitment_home .metrics-definition .metrics-definition-label {
+  font-weight: var(--hr-weight-medium);
 }

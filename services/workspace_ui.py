@@ -1,5 +1,6 @@
 """首页工作驾驶舱组件。"""
 
+from html import escape
 from pathlib import Path
 
 import streamlit as st
@@ -123,9 +124,19 @@ def render_action_queue(actions: tuple[dict, ...]) -> None:
                 else:
                     st.caption("没有找到匹配的待办。" if query else "暂无可列出的待办明细。")
             with st.expander("统计口径与数据说明", expanded=False):
-                st.caption("跟进与Offer待办按人岗组合计数；同一候选人可能涉及多个岗位。未接入的数据不显示为零待办。")
-                for item in actions:
-                    st.caption(f"{item['label']}：{item['detail']}")
+                summary = "跟进与Offer待办按人岗组合计数；同一候选人可能涉及多个岗位。未接入的数据不显示为零待办。"
+                items = "".join(
+                    '<div class="metrics-definition-item">'
+                    f'<span class="metrics-definition-label">{escape(str(item["label"]))}：</span>'
+                    f'<span class="metrics-definition-text">{escape(str(item["detail"]))}</span></div>'
+                    for item in actions
+                )
+                st.markdown(
+                    '<div class="metrics-definition">'
+                    f'<div class="metrics-definition-summary">{escape(summary)}</div>'
+                    f'<div class="metrics-definition-items">{items}</div></div>',
+                    unsafe_allow_html=True,
+                )
 
 
 def render_job_progress(rows: tuple[dict, ...]) -> None:
